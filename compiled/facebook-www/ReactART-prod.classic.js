@@ -71,6 +71,8 @@ var dynamicFeatureFlags = require("ReactFeatureFlags"),
     dynamicFeatureFlags.enableEffectEventMutationPhase,
   enableInfiniteRenderLoopDetection =
     dynamicFeatureFlags.enableInfiniteRenderLoopDetection,
+  enableInfiniteRenderLoopDetectionForceThrow =
+    dynamicFeatureFlags.enableInfiniteRenderLoopDetectionForceThrow,
   enableNoCloningMemoCache = dynamicFeatureFlags.enableNoCloningMemoCache,
   enableObjectFiber = dynamicFeatureFlags.enableObjectFiber,
   enableRetryLaneExpiration = dynamicFeatureFlags.enableRetryLaneExpiration,
@@ -1012,7 +1014,26 @@ function describeNativeComponentFrame(fn, construct) {
               } catch (x$9) {
                 control = x$9;
               }
-              fn.call(Fake.prototype);
+              Fake = !1;
+              try {
+                var prevProps = Object.getOwnPropertyDescriptor(
+                  fn.prototype,
+                  "props"
+                );
+                Object.defineProperty(fn.prototype, "props", {
+                  configurable: !0,
+                  set: function () {
+                    throw Error();
+                  }
+                });
+                Fake = !0;
+                new fn();
+              } finally {
+                Fake &&
+                  (void 0 !== prevProps
+                    ? Object.defineProperty(fn.prototype, "props", prevProps)
+                    : delete fn.prototype.props);
+              }
             }
           } else {
             try {
@@ -1893,11 +1914,11 @@ function trackUsedThenable(thenableState, thenable, index) {
     case "fulfilled":
       return thenable.value;
     case "rejected":
-      throw (
-        ((thenableState = thenable.reason),
-        checkIfUseWrappedInAsyncCatch(thenableState),
-        thenableState)
-      );
+      thenableState = thenable.reason;
+      checkIfUseWrappedInAsyncCatch(thenableState);
+      if (void 0 === thenableState && !("reason" in thenable))
+        throw Error(formatProdErrorMessage(600));
+      throw thenableState;
     default:
       if ("string" === typeof thenable.status) thenable.then(noop, noop);
       else {
@@ -11074,6 +11095,10 @@ function resolveRetryWakeable(boundaryFiber, wakeable) {
   null !== retryCache && retryCache.delete(wakeable);
   retryTimedOutBoundary(boundaryFiber, retryLane);
 }
+function throwForcedInfiniteRenderLoopError(root, renderLanes) {
+  null !== root && (root.errorRecoveryDisabledLanes |= renderLanes);
+  throw Error(formatProdErrorMessage(598));
+}
 function throwIfInfiniteUpdateLoopDetected(
   isFromInfiniteRenderLoopDetectionInstrumentation
 ) {
@@ -11082,16 +11107,26 @@ function throwIfInfiniteUpdateLoopDetected(
     rootWithNestedUpdates = null;
     var updateKind = nestedUpdateKind;
     nestedUpdateKind = 0;
-    if (enableInfiniteRenderLoopDetection) {
-      if (
-        1 === updateKind &&
-        !(
+    if (enableInfiniteRenderLoopDetection)
+      if (1 === updateKind)
+        if (
           isFromInfiniteRenderLoopDetectionInstrumentation ||
-          (executionContext & 2 && null !== workInProgressRoot)
+          0 !== (executionContext & 2)
         )
-      )
-        throw Error(formatProdErrorMessage(185));
-    } else throw Error(formatProdErrorMessage(185));
+          enableInfiniteRenderLoopDetectionForceThrow &&
+            throwForcedInfiniteRenderLoopError(
+              workInProgressRoot,
+              workInProgressRootRenderLanes
+            );
+        else throw Error(formatProdErrorMessage(185));
+      else
+        2 === updateKind &&
+          enableInfiniteRenderLoopDetectionForceThrow &&
+          throwForcedInfiniteRenderLoopError(
+            workInProgressRoot,
+            workInProgressRootRenderLanes
+          );
+    else throw Error(formatProdErrorMessage(185));
   }
 }
 function scheduleCallback(priorityLevel, callback) {
@@ -11618,10 +11653,10 @@ var slice = Array.prototype.slice,
   })(React.Component);
 var internals$jscomp$inline_1629 = {
   bundleType: 0,
-  version: "19.3.0-www-classic-142cfde8-20260422",
+  version: "19.3.0-www-classic-de8e0054-20260531",
   rendererPackageName: "react-art",
   currentDispatcherRef: ReactSharedInternals,
-  reconcilerVersion: "19.3.0-www-classic-142cfde8-20260422"
+  reconcilerVersion: "19.3.0-www-classic-de8e0054-20260531"
 };
 if ("undefined" !== typeof __REACT_DEVTOOLS_GLOBAL_HOOK__) {
   var hook$jscomp$inline_1630 = __REACT_DEVTOOLS_GLOBAL_HOOK__;
@@ -11647,4 +11682,4 @@ exports.RadialGradient = RadialGradient;
 exports.Shape = TYPES.SHAPE;
 exports.Surface = Surface;
 exports.Text = Text;
-exports.version = "19.3.0-www-classic-142cfde8-20260422";
+exports.version = "19.3.0-www-classic-de8e0054-20260531";

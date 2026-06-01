@@ -1263,7 +1263,9 @@ __DEV__ &&
             "This object has been omitted by React in the console log to avoid sending too much data from the server. Try logging smaller or more specific objects." ===
             value
               ? "\u2026"
-              : JSON.stringify(value);
+              : JSON.stringify(
+                  1024 <= value.length ? value.slice(0, 1023) + "\u2026" : value
+                );
           break;
         case "undefined":
           value = "undefined";
@@ -2086,7 +2088,30 @@ __DEV__ &&
                   } catch (x$0) {
                     control = x$0;
                   }
-                  fn.call(Fake.prototype);
+                  Fake = !1;
+                  try {
+                    var prevProps = Object.getOwnPropertyDescriptor(
+                      fn.prototype,
+                      "props"
+                    );
+                    Object.defineProperty(fn.prototype, "props", {
+                      configurable: !0,
+                      set: function () {
+                        throw Error();
+                      }
+                    });
+                    Fake = !0;
+                    new fn();
+                  } finally {
+                    Fake &&
+                      (void 0 !== prevProps
+                        ? Object.defineProperty(
+                            fn.prototype,
+                            "props",
+                            prevProps
+                          )
+                        : delete fn.prototype.props);
+                  }
                 }
               } else {
                 try {
@@ -4097,11 +4122,13 @@ __DEV__ &&
         case "fulfilled":
           return thenable.value;
         case "rejected":
-          throw (
-            ((thenableState = thenable.reason),
-            checkIfUseWrappedInAsyncCatch(thenableState),
-            thenableState)
-          );
+          thenableState = thenable.reason;
+          checkIfUseWrappedInAsyncCatch(thenableState);
+          if (void 0 === thenableState && !("reason" in thenable))
+            throw Error(
+              "A rejected Promise was passed to React without a `reason` property. React threw a generic error from where the Promise was used to assist in identifying the problematic Promise. Make sure that instrumented Promises correctly set the `reason` property when setting `status` to `'rejected'`."
+            );
+          throw thenableState;
         default:
           if ("string" === typeof thenable.status)
             thenable.then(noop$1, noop$1);
@@ -19376,6 +19403,12 @@ __DEV__ &&
       null !== retryCache && retryCache.delete(wakeable);
       retryTimedOutBoundary(boundaryFiber, retryLane);
     }
+    function throwForcedInfiniteRenderLoopError(root, renderLanes) {
+      null !== root && (root.errorRecoveryDisabledLanes |= renderLanes);
+      throw Error(
+        "Maximum update depth exceeded. This could be an infinite loop. This can happen when a component repeatedly calls setState during render phase or inside useLayoutEffect, causing infinite render loop. React limits the number of nested updates to prevent infinite loops."
+      );
+    }
     function throwIfInfiniteUpdateLoopDetected(
       isFromInfiniteRenderLoopDetectionInstrumentation
     ) {
@@ -19388,20 +19421,30 @@ __DEV__ &&
           if (updateKind === NESTED_UPDATE_SYNC_LANE)
             if (
               isFromInfiniteRenderLoopDetectionInstrumentation ||
-              (executionContext & RenderContext && null !== workInProgressRoot)
+              (executionContext & RenderContext) !== NoContext
             )
-              console.error(
-                "Maximum update depth exceeded. This could be an infinite loop. This can happen when a component repeatedly calls setState during render phase or inside useLayoutEffect, causing infinite render loop. React limits the number of nested updates to prevent infinite loops."
-              );
+              enableInfiniteRenderLoopDetectionForceThrow
+                ? throwForcedInfiniteRenderLoopError(
+                    workInProgressRoot,
+                    workInProgressRootRenderLanes
+                  )
+                : console.error(
+                    "Maximum update depth exceeded. This could be an infinite loop. This can happen when a component repeatedly calls setState during render phase or inside useLayoutEffect, causing infinite render loop. React limits the number of nested updates to prevent infinite loops."
+                  );
             else
               throw Error(
                 "Maximum update depth exceeded. This can happen when a component repeatedly calls setState inside componentWillUpdate or componentDidUpdate. React limits the number of nested updates to prevent infinite loops."
               );
           else
             updateKind === NESTED_UPDATE_PHASE_SPAWN &&
-              console.error(
-                "Maximum update depth exceeded. This could be an infinite loop. This can happen when a component repeatedly calls setState during render phase or inside useLayoutEffect, causing infinite render loop. React limits the number of nested updates to prevent infinite loops."
-              );
+              (enableInfiniteRenderLoopDetectionForceThrow
+                ? throwForcedInfiniteRenderLoopError(
+                    workInProgressRoot,
+                    workInProgressRootRenderLanes
+                  )
+                : console.error(
+                    "Maximum update depth exceeded. This could be an infinite loop. This can happen when a component repeatedly calls setState during render phase or inside useLayoutEffect, causing infinite render loop. React limits the number of nested updates to prevent infinite loops."
+                  ));
         else
           throw Error(
             "Maximum update depth exceeded. This can happen when a component repeatedly calls setState inside componentWillUpdate or componentDidUpdate. React limits the number of nested updates to prevent infinite loops."
@@ -20310,6 +20353,8 @@ __DEV__ &&
         dynamicFeatureFlags.enableEffectEventMutationPhase,
       enableInfiniteRenderLoopDetection =
         dynamicFeatureFlags.enableInfiniteRenderLoopDetection,
+      enableInfiniteRenderLoopDetectionForceThrow =
+        dynamicFeatureFlags.enableInfiniteRenderLoopDetectionForceThrow,
       enableNoCloningMemoCache = dynamicFeatureFlags.enableNoCloningMemoCache,
       enableObjectFiber = dynamicFeatureFlags.enableObjectFiber,
       enableRetryLaneExpiration = dynamicFeatureFlags.enableRetryLaneExpiration,
@@ -23101,7 +23146,7 @@ __DEV__ &&
         version: rendererVersion,
         rendererPackageName: rendererPackageName,
         currentDispatcherRef: ReactSharedInternals,
-        reconcilerVersion: "19.3.0-www-classic-142cfde8-20260422"
+        reconcilerVersion: "19.3.0-www-classic-de8e0054-20260531"
       };
       null !== extraDevToolsConfig &&
         (internals.rendererConfig = extraDevToolsConfig);

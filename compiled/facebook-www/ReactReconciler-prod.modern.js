@@ -657,7 +657,26 @@ module.exports = function ($$$config) {
                 } catch (x$11) {
                   control = x$11;
                 }
-                fn.call(Fake.prototype);
+                Fake = !1;
+                try {
+                  var prevProps = Object.getOwnPropertyDescriptor(
+                    fn.prototype,
+                    "props"
+                  );
+                  Object.defineProperty(fn.prototype, "props", {
+                    configurable: !0,
+                    set: function () {
+                      throw Error();
+                    }
+                  });
+                  Fake = !0;
+                  new fn();
+                } finally {
+                  Fake &&
+                    (void 0 !== prevProps
+                      ? Object.defineProperty(fn.prototype, "props", prevProps)
+                      : delete fn.prototype.props);
+                }
               }
             } else {
               try {
@@ -1657,11 +1676,11 @@ module.exports = function ($$$config) {
       case "fulfilled":
         return thenable.value;
       case "rejected":
-        throw (
-          ((thenableState = thenable.reason),
-          checkIfUseWrappedInAsyncCatch(thenableState),
-          thenableState)
-        );
+        thenableState = thenable.reason;
+        checkIfUseWrappedInAsyncCatch(thenableState);
+        if (void 0 === thenableState && !("reason" in thenable))
+          throw Error(formatProdErrorMessage(600));
+        throw thenableState;
       default:
         if ("string" === typeof thenable.status) thenable.then(noop$1, noop$1);
         else {
@@ -12441,6 +12460,10 @@ module.exports = function ($$$config) {
     null !== retryCache && retryCache.delete(wakeable);
     retryTimedOutBoundary(boundaryFiber, retryLane);
   }
+  function throwForcedInfiniteRenderLoopError(root, renderLanes) {
+    null !== root && (root.errorRecoveryDisabledLanes |= renderLanes);
+    throw Error(formatProdErrorMessage(598));
+  }
   function throwIfInfiniteUpdateLoopDetected(
     isFromInfiniteRenderLoopDetectionInstrumentation
   ) {
@@ -12449,16 +12472,26 @@ module.exports = function ($$$config) {
       rootWithNestedUpdates = null;
       var updateKind = nestedUpdateKind;
       nestedUpdateKind = 0;
-      if (enableInfiniteRenderLoopDetection) {
-        if (
-          1 === updateKind &&
-          !(
+      if (enableInfiniteRenderLoopDetection)
+        if (1 === updateKind)
+          if (
             isFromInfiniteRenderLoopDetectionInstrumentation ||
-            (executionContext & 2 && null !== workInProgressRoot)
+            0 !== (executionContext & 2)
           )
-        )
-          throw Error(formatProdErrorMessage(185));
-      } else throw Error(formatProdErrorMessage(185));
+            enableInfiniteRenderLoopDetectionForceThrow &&
+              throwForcedInfiniteRenderLoopError(
+                workInProgressRoot,
+                workInProgressRootRenderLanes
+              );
+          else throw Error(formatProdErrorMessage(185));
+        else
+          2 === updateKind &&
+            enableInfiniteRenderLoopDetectionForceThrow &&
+            throwForcedInfiniteRenderLoopError(
+              workInProgressRoot,
+              workInProgressRootRenderLanes
+            );
+      else throw Error(formatProdErrorMessage(185));
     }
   }
   function scheduleCallback(priorityLevel, callback) {
@@ -12938,6 +12971,8 @@ module.exports = function ($$$config) {
       dynamicFeatureFlags.enableEffectEventMutationPhase,
     enableInfiniteRenderLoopDetection =
       dynamicFeatureFlags.enableInfiniteRenderLoopDetection,
+    enableInfiniteRenderLoopDetectionForceThrow =
+      dynamicFeatureFlags.enableInfiniteRenderLoopDetectionForceThrow,
     enableNoCloningMemoCache = dynamicFeatureFlags.enableNoCloningMemoCache,
     enableObjectFiber = dynamicFeatureFlags.enableObjectFiber,
     enableRetryLaneExpiration = dynamicFeatureFlags.enableRetryLaneExpiration,
@@ -14183,7 +14218,7 @@ module.exports = function ($$$config) {
       version: rendererVersion,
       rendererPackageName: rendererPackageName,
       currentDispatcherRef: ReactSharedInternals,
-      reconcilerVersion: "19.3.0-www-modern-142cfde8-20260422"
+      reconcilerVersion: "19.3.0-www-modern-de8e0054-20260531"
     };
     null !== extraDevToolsConfig &&
       (internals.rendererConfig = extraDevToolsConfig);
