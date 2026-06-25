@@ -7,7 +7,7 @@
  * @noflow
  * @nolint
  * @preventMunge
- * @generated SignedSource<<10989dd7c2da0774c4e317bccb4eef0d>>
+ * @generated SignedSource<<d7016f42bdcc0dacc39f8f6dc7835e70>>
  */
 
 "use strict";
@@ -292,7 +292,11 @@ __DEV__ &&
                     ? options.integrity
                     : void 0,
                 nonce:
-                  "string" === typeof options.nonce ? options.nonce : void 0
+                  "string" === typeof options.nonce ? options.nonce : void 0,
+                fetchPriority:
+                  "string" === typeof options.fetchPriority
+                    ? options.fetchPriority
+                    : void 0
               });
         } else null == options && Internals.d.M(href);
     };
@@ -394,6 +398,10 @@ __DEV__ &&
               integrity:
                 "string" === typeof options.integrity
                   ? options.integrity
+                  : void 0,
+              fetchPriority:
+                "string" === typeof options.fetchPriority
+                  ? options.fetchPriority
                   : void 0
             }))
           : Internals.d.m(href));
@@ -410,5 +418,5 @@ __DEV__ &&
     exports.useFormStatus = function () {
       return resolveDispatcher().useHostTransitionStatus();
     };
-    exports.version = "19.3.0-native-fb-560db514-20260617";
+    exports.version = "19.3.0-native-fb-76caf322-20260625";
   })();
