@@ -20046,14 +20046,14 @@ function getCrossOriginStringAs(as, input) {
 }
 var isomorphicReactPackageVersion$jscomp$inline_2050 = React.version;
 if (
-  "19.3.0-www-modern-560db514-20260617" !==
+  "19.3.0-www-modern-76caf322-20260625" !==
   isomorphicReactPackageVersion$jscomp$inline_2050
 )
   throw Error(
     formatProdErrorMessage(
       527,
       isomorphicReactPackageVersion$jscomp$inline_2050,
-      "19.3.0-www-modern-560db514-20260617"
+      "19.3.0-www-modern-76caf322-20260625"
     )
   );
 Internals.findDOMNode = function (componentOrElement) {
@@ -20071,10 +20071,10 @@ Internals.Events = [
 ];
 var internals$jscomp$inline_2608 = {
   bundleType: 0,
-  version: "19.3.0-www-modern-560db514-20260617",
+  version: "19.3.0-www-modern-76caf322-20260625",
   rendererPackageName: "react-dom",
   currentDispatcherRef: ReactSharedInternals,
-  reconcilerVersion: "19.3.0-www-modern-560db514-20260617"
+  reconcilerVersion: "19.3.0-www-modern-76caf322-20260625"
 };
 if ("undefined" !== typeof __REACT_DEVTOOLS_GLOBAL_HOOK__) {
   var hook$jscomp$inline_2609 = __REACT_DEVTOOLS_GLOBAL_HOOK__;
@@ -20404,7 +20404,11 @@ exports.preinitModule = function (href, options) {
           crossOrigin: crossOrigin,
           integrity:
             "string" === typeof options.integrity ? options.integrity : void 0,
-          nonce: "string" === typeof options.nonce ? options.nonce : void 0
+          nonce: "string" === typeof options.nonce ? options.nonce : void 0,
+          fetchPriority:
+            "string" === typeof options.fetchPriority
+              ? options.fetchPriority
+              : void 0
         });
       }
     } else null == options && Internals.d.M(href);
@@ -20451,7 +20455,11 @@ exports.preloadModule = function (href, options) {
             : void 0,
         crossOrigin: crossOrigin,
         integrity:
-          "string" === typeof options.integrity ? options.integrity : void 0
+          "string" === typeof options.integrity ? options.integrity : void 0,
+        fetchPriority:
+          "string" === typeof options.fetchPriority
+            ? options.fetchPriority
+            : void 0
       });
     } else Internals.d.m(href);
 };
@@ -20503,4 +20511,4 @@ exports.useFormState = function (action, initialState, permalink) {
 exports.useFormStatus = function () {
   return ReactSharedInternals.H.useHostTransitionStatus();
 };
-exports.version = "19.3.0-www-modern-560db514-20260617";
+exports.version = "19.3.0-www-modern-76caf322-20260625";
