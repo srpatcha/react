@@ -7,7 +7,7 @@
  * @noflow
  * @nolint
  * @preventMunge
- * @generated SignedSource<<d7016f42bdcc0dacc39f8f6dc7835e70>>
+ * @generated SignedSource<<9bf9ef0008860d66149e786dfa433617>>
  */
 
 "use strict";
@@ -399,6 +399,7 @@ __DEV__ &&
                 "string" === typeof options.integrity
                   ? options.integrity
                   : void 0,
+              nonce: "string" === typeof options.nonce ? options.nonce : void 0,
               fetchPriority:
                 "string" === typeof options.fetchPriority
                   ? options.fetchPriority
@@ -418,5 +419,5 @@ __DEV__ &&
     exports.useFormStatus = function () {
       return resolveDispatcher().useHostTransitionStatus();
     };
-    exports.version = "19.3.0-native-fb-76caf322-20260625";
+    exports.version = "19.3.0-native-fb-7023f501-20260714";
   })();

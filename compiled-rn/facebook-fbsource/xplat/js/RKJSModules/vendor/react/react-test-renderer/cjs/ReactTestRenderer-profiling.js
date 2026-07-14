@@ -7,7 +7,7 @@
  * @noflow
  * @nolint
  * @preventMunge
- * @generated SignedSource<<f3a4e587b7055e006274ade094777b8d>>
+ * @generated SignedSource<<a259834d5d72dba21af5649064748c02>>
  */
 
 "use strict";
@@ -2018,7 +2018,7 @@ function createChildReconciler(shouldTrackSideEffects) {
       return (
         (newIndex = newIndex.index),
         newIndex < lastPlacedIndex
-          ? ((newFiber.flags |= 134217730), lastPlacedIndex)
+          ? ((newFiber.flags |= 2), lastPlacedIndex)
           : newIndex
       );
     newFiber.flags |= 134217730;
@@ -5644,7 +5644,7 @@ function updateSuspenseComponent(current, workInProgress, renderLanes) {
           (nextProps.treeBaseDuration = didSuspend.treeBaseDuration)),
         (workInProgress.deletions = null))
       : ((nextProps = createWorkInProgress(didSuspend, primaryChildProps)),
-        (nextProps.subtreeFlags = didSuspend.subtreeFlags & 133169152));
+        (nextProps.subtreeFlags = didSuspend.subtreeFlags & 1206910976));
     null !== currentFallbackChildFragment
       ? (showFallback = createWorkInProgress(
           currentFallbackChildFragment,
@@ -6616,8 +6616,8 @@ function bubbleProperties(completedWork) {
 
       )
         (newChildLanes |= child$88.lanes | child$88.childLanes),
-          (subtreeFlags |= child$88.subtreeFlags & 133169152),
-          (subtreeFlags |= child$88.flags & 133169152),
+          (subtreeFlags |= child$88.subtreeFlags & 1206910976),
+          (subtreeFlags |= child$88.flags & 1206910976),
           (treeBaseDuration$87 += child$88.treeBaseDuration),
           (child$88 = child$88.sibling);
       completedWork.treeBaseDuration = treeBaseDuration$87;
@@ -6629,8 +6629,8 @@ function bubbleProperties(completedWork) {
       )
         (newChildLanes |=
           treeBaseDuration$87.lanes | treeBaseDuration$87.childLanes),
-          (subtreeFlags |= treeBaseDuration$87.subtreeFlags & 133169152),
-          (subtreeFlags |= treeBaseDuration$87.flags & 133169152),
+          (subtreeFlags |= treeBaseDuration$87.subtreeFlags & 1206910976),
+          (subtreeFlags |= treeBaseDuration$87.flags & 1206910976),
           (treeBaseDuration$87.return = completedWork),
           (treeBaseDuration$87 = treeBaseDuration$87.sibling);
   else if (0 !== (completedWork.mode & 2)) {
@@ -9744,7 +9744,10 @@ function performWorkOnRoot(root$jscomp$0, lanes, forceSync) {
               JSCompiler_inline_result,
               !1
             );
-            if (2 !== JSCompiler_inline_result) {
+            if (
+              2 !== JSCompiler_inline_result &&
+              6 !== JSCompiler_inline_result
+            ) {
               if (workInProgressRootDidAttachPingListener) {
                 root.errorRecoveryDisabledLanes |= renderWasConcurrent;
                 workInProgressRootInterleavedUpdatedLanes |=
@@ -11009,7 +11012,7 @@ function createWorkInProgress(current, pendingProps) {
       (workInProgress.deletions = null),
       (workInProgress.actualDuration = -0),
       (workInProgress.actualStartTime = -1.1));
-  workInProgress.flags = current.flags & 133169152;
+  workInProgress.flags = current.flags & 1206910976;
   workInProgress.childLanes = current.childLanes;
   workInProgress.lanes = current.lanes;
   workInProgress.child = current.child;
@@ -11030,7 +11033,7 @@ function createWorkInProgress(current, pendingProps) {
   return workInProgress;
 }
 function resetWorkInProgress(workInProgress, renderLanes) {
-  workInProgress.flags &= 133169154;
+  workInProgress.flags &= 1206910978;
   var current = workInProgress.alternate;
   null === current
     ? ((workInProgress.childLanes = 0),
@@ -11075,10 +11078,10 @@ function createFiberFromTypeAndProps(
 ) {
   var fiberTag = 0;
   owner = type;
-  if ("function" === typeof type) shouldConstruct(type) && (fiberTag = 1);
-  else if ("string" === typeof type) fiberTag = 5;
+  if ("function" === typeof owner) shouldConstruct(owner) && (fiberTag = 1);
+  else if ("string" === typeof owner) fiberTag = 5;
   else
-    a: switch (type) {
+    a: switch (owner) {
       case REACT_ACTIVITY_TYPE:
         return (
           (type = createFiberImplClass(31, pendingProps, key, mode)),
@@ -11131,8 +11134,8 @@ function createFiberFromTypeAndProps(
           type
         );
       default:
-        if ("object" === typeof type && null !== type)
-          switch (type.$$typeof) {
+        if ("object" === typeof owner && null !== owner)
+          switch (owner.$$typeof) {
             case REACT_CONTEXT_TYPE:
               fiberTag = 10;
               break a;
@@ -11626,10 +11629,10 @@ function wrapFiber(fiber) {
 }
 var internals$jscomp$inline_1330 = {
   bundleType: 0,
-  version: "19.3.0-native-fb-76caf322-20260625",
+  version: "19.3.0-native-fb-7023f501-20260714",
   rendererPackageName: "react-test-renderer",
   currentDispatcherRef: ReactSharedInternals,
-  reconcilerVersion: "19.3.0-native-fb-76caf322-20260625",
+  reconcilerVersion: "19.3.0-native-fb-7023f501-20260714",
   getLaneLabelMap: function () {
     for (
       var map = new Map(), lane = 1, index$156 = 0;
@@ -11780,4 +11783,4 @@ exports.unstable_batchedUpdates = function (fn, a) {
         flushSyncWorkAcrossRoots_impl(0, !0));
   }
 };
-exports.version = "19.3.0-native-fb-76caf322-20260625";
+exports.version = "19.3.0-native-fb-7023f501-20260714";

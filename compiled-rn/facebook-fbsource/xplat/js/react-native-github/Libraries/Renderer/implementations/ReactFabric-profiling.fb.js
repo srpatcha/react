@@ -7,7 +7,7 @@
  * @noflow
  * @nolint
  * @preventMunge
- * @generated SignedSource<<0a8631101516acea4692773c87ab3ffa>>
+ * @generated SignedSource<<a7a79b840eb434b3ce749c561873d378>>
  */
 
 "use strict";
@@ -3381,7 +3381,7 @@ function createChildReconciler(shouldTrackSideEffects) {
       return (
         (newIndex = newIndex.index),
         newIndex < lastPlacedIndex
-          ? ((newFiber.flags |= 134217730), lastPlacedIndex)
+          ? ((newFiber.flags |= 2), lastPlacedIndex)
           : newIndex
       );
     newFiber.flags |= 134217730;
@@ -7017,7 +7017,7 @@ function updateSuspenseComponent(current, workInProgress, renderLanes) {
           (nextProps.treeBaseDuration = didSuspend.treeBaseDuration)),
         (workInProgress.deletions = null))
       : ((nextProps = createWorkInProgress(didSuspend, primaryChildProps)),
-        (nextProps.subtreeFlags = didSuspend.subtreeFlags & 133169152));
+        (nextProps.subtreeFlags = didSuspend.subtreeFlags & 1206910976));
     null !== currentFallbackChildFragment
       ? (showFallback = createWorkInProgress(
           currentFallbackChildFragment,
@@ -8098,8 +8098,8 @@ function bubbleProperties(completedWork) {
 
       )
         (newChildLanes |= child$100.lanes | child$100.childLanes),
-          (subtreeFlags |= child$100.subtreeFlags & 133169152),
-          (subtreeFlags |= child$100.flags & 133169152),
+          (subtreeFlags |= child$100.subtreeFlags & 1206910976),
+          (subtreeFlags |= child$100.flags & 1206910976),
           (treeBaseDuration$99 += child$100.treeBaseDuration),
           (child$100 = child$100.sibling);
       completedWork.treeBaseDuration = treeBaseDuration$99;
@@ -8111,8 +8111,8 @@ function bubbleProperties(completedWork) {
       )
         (newChildLanes |=
           treeBaseDuration$99.lanes | treeBaseDuration$99.childLanes),
-          (subtreeFlags |= treeBaseDuration$99.subtreeFlags & 133169152),
-          (subtreeFlags |= treeBaseDuration$99.flags & 133169152),
+          (subtreeFlags |= treeBaseDuration$99.subtreeFlags & 1206910976),
+          (subtreeFlags |= treeBaseDuration$99.flags & 1206910976),
           (treeBaseDuration$99.return = completedWork),
           (treeBaseDuration$99 = treeBaseDuration$99.sibling);
   else if (0 !== (completedWork.mode & 2)) {
@@ -8607,6 +8607,16 @@ function completeWork(current, workInProgress, renderLanes) {
     case 30:
       return (
         (workInProgress.flags |= 33554432),
+        (current = workInProgress.pendingProps),
+        (workInProgress.flags =
+          void 0 !== current.parentEnter ||
+          void 0 !== current.parentExit ||
+          null != current.onParentEnter ||
+          null != current.onParentExit ||
+          null != current.onGestureParentEnter ||
+          null != current.onGestureParentExit
+            ? workInProgress.flags | 1073741824
+            : workInProgress.flags & -1073741825),
         bubbleProperties(workInProgress),
         null
       );
@@ -9253,6 +9263,84 @@ function commitAppearingPairViewTransitions(placement) {
       placement = placement.sibling;
     }
 }
+function commitParentEnterViewTransitions(parent, gesture) {
+  for (parent = parent.child; null !== parent; ) {
+    if (22 !== parent.tag || null === parent.memoizedState)
+      if (30 === parent.tag) {
+        var props = parent.memoizedProps,
+          hasParentClass = void 0 !== props.parentEnter,
+          hasParentHandler = gesture
+            ? null != props.onGestureParentEnter
+            : null != props.onParentEnter;
+        if (hasParentClass || hasParentHandler) {
+          var relay = !0;
+          if (hasParentClass) {
+            hasParentClass = getViewTransitionName(props, parent.stateNode);
+            var className = getViewTransitionClassName(
+              props.default,
+              props.parentEnter
+            );
+            "none" === className
+              ? (relay = !1)
+              : (applyViewTransitionToHostInstances(
+                  parent,
+                  hasParentClass,
+                  className,
+                  null,
+                  !1
+                ),
+                hasParentHandler &&
+                  !gesture &&
+                  scheduleViewTransitionEvent(parent, props.onParentEnter));
+          } else
+            gesture || scheduleViewTransitionEvent(parent, props.onParentEnter);
+          relay && commitParentEnterViewTransitions(parent, gesture);
+        }
+      } else
+        0 !== (parent.subtreeFlags & 1073741824) &&
+          commitParentEnterViewTransitions(parent, gesture);
+    parent = parent.sibling;
+  }
+}
+function commitParentExitViewTransitions(parent, gesture) {
+  for (parent = parent.child; null !== parent; ) {
+    if (22 !== parent.tag || null === parent.memoizedState)
+      if (30 === parent.tag) {
+        var props = parent.memoizedProps,
+          hasParentClass = void 0 !== props.parentExit,
+          hasParentHandler = gesture
+            ? null != props.onGestureParentExit
+            : null != props.onParentExit;
+        if (hasParentClass || hasParentHandler) {
+          var relay = !0;
+          if (hasParentClass) {
+            hasParentClass = getViewTransitionName(props, parent.stateNode);
+            var className = getViewTransitionClassName(
+              props.default,
+              props.parentExit
+            );
+            "none" === className
+              ? (relay = !1)
+              : (applyViewTransitionToHostInstances(
+                  parent,
+                  hasParentClass,
+                  className,
+                  null,
+                  !1
+                ),
+                hasParentHandler &&
+                  !gesture &&
+                  scheduleViewTransitionEvent(parent, props.onParentExit));
+          } else
+            gesture || scheduleViewTransitionEvent(parent, props.onParentExit);
+          relay && commitParentExitViewTransitions(parent, gesture);
+        }
+      } else
+        0 !== (parent.subtreeFlags & 1073741824) &&
+          commitParentExitViewTransitions(parent, gesture);
+    parent = parent.sibling;
+  }
+}
 function commitEnterViewTransitions(placement, gesture) {
   if (30 === placement.tag) {
     var state = placement.stateNode,
@@ -9272,8 +9360,8 @@ function commitEnterViewTransitions(placement, gesture) {
         ) &&
         (commitAppearingPairViewTransitions(placement),
         state.paired ||
-          gesture ||
-          scheduleViewTransitionEvent(placement, props.onEnter))
+          (gesture || scheduleViewTransitionEvent(placement, props.onEnter),
+          commitParentEnterViewTransitions(placement, gesture)))
       : commitAppearingPairViewTransitions(placement);
   } else if (0 !== (placement.subtreeFlags & 33554432))
     for (placement = placement.child; null !== placement; )
@@ -9343,7 +9431,8 @@ function commitExitViewTransitions(deletion) {
           (className.paired = pair),
           appearingViewTransitions.delete(name),
           scheduleViewTransitionEvent(deletion, props.onShare))
-        : scheduleViewTransitionEvent(deletion, props.onExit));
+        : (scheduleViewTransitionEvent(deletion, props.onExit),
+          commitParentExitViewTransitions(deletion, !1)));
     null !== appearingViewTransitions &&
       commitDeletedPairViewTransitions(deletion);
   } else if (0 !== (deletion.subtreeFlags & 33554432))
@@ -11811,6 +11900,7 @@ function performWorkOnRoot(root$jscomp$0, lanes, forceSync) {
           yieldDuration = workInProgressRootConcurrentErrors;
           exitStatus = renderRootSync(root, JSCompiler_inline_result, !1);
           2 !== exitStatus &&
+            6 !== exitStatus &&
             (workInProgressRootDidAttachPingListener
               ? ((root.errorRecoveryDisabledLanes |= renderWasConcurrent),
                 (workInProgressRootInterleavedUpdatedLanes |=
@@ -13561,7 +13651,7 @@ function createWorkInProgress(current, pendingProps) {
       (workInProgress.deletions = null),
       (workInProgress.actualDuration = -0),
       (workInProgress.actualStartTime = -1.1));
-  workInProgress.flags = current.flags & 133169152;
+  workInProgress.flags = current.flags & 1206910976;
   workInProgress.childLanes = current.childLanes;
   workInProgress.lanes = current.lanes;
   workInProgress.child = current.child;
@@ -13582,7 +13672,7 @@ function createWorkInProgress(current, pendingProps) {
   return workInProgress;
 }
 function resetWorkInProgress(workInProgress, renderLanes) {
-  workInProgress.flags &= 133169154;
+  workInProgress.flags &= 1206910978;
   var current = workInProgress.alternate;
   null === current
     ? ((workInProgress.childLanes = 0),
@@ -13627,10 +13717,10 @@ function createFiberFromTypeAndProps(
 ) {
   var fiberTag = 0;
   owner = type;
-  if ("function" === typeof type) shouldConstruct(type) && (fiberTag = 1);
-  else if ("string" === typeof type) fiberTag = 5;
+  if ("function" === typeof owner) shouldConstruct(owner) && (fiberTag = 1);
+  else if ("string" === typeof owner) fiberTag = 5;
   else
-    a: switch (type) {
+    a: switch (owner) {
       case REACT_ACTIVITY_TYPE:
         return (
           (type = createFiber(31, pendingProps, key, mode)),
@@ -13683,8 +13773,8 @@ function createFiberFromTypeAndProps(
           type
         );
       default:
-        if ("object" === typeof type && null !== type)
-          switch (type.$$typeof) {
+        if ("object" === typeof owner && null !== owner)
+          switch (owner.$$typeof) {
             case REACT_CONTEXT_TYPE:
               fiberTag = 10;
               break a;
@@ -14312,10 +14402,10 @@ batchedUpdatesImpl = function (fn, a) {
 var roots = new Map(),
   internals$jscomp$inline_1686 = {
     bundleType: 0,
-    version: "19.3.0-native-fb-76caf322-20260625",
+    version: "19.3.0-native-fb-7023f501-20260714",
     rendererPackageName: "react-native-renderer",
     currentDispatcherRef: ReactSharedInternals,
-    reconcilerVersion: "19.3.0-native-fb-76caf322-20260625"
+    reconcilerVersion: "19.3.0-native-fb-7023f501-20260714"
   };
 null !== extraDevToolsConfig &&
   (internals$jscomp$inline_1686.rendererConfig = extraDevToolsConfig);

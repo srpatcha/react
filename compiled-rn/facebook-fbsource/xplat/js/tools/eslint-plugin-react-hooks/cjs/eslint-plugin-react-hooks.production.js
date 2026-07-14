@@ -6,7 +6,7 @@
  *
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
- * @generated SignedSource<<fe5c2e375515037ccbf01443914b80e4>>
+ * @generated SignedSource<<88d91ea7b27cb73d1839f96201bfba34>>
  */
 
 'use strict';
@@ -23288,7 +23288,9 @@ function lowerStatement(builder, stmtPath, label = null) {
         case 'VariableDeclaration': {
             const stmt = stmtPath;
             const nodeKind = stmt.node.kind;
-            if (nodeKind === 'var') {
+            if (nodeKind === 'var' ||
+                nodeKind === 'using' ||
+                nodeKind === 'await using') {
                 builder.recordError(new CompilerErrorDetail({
                     reason: `(BuildHIR::lowerStatement) Handle ${nodeKind} kinds in VariableDeclaration`,
                     category: ErrorCategory.Todo,
@@ -25338,7 +25340,7 @@ function lowerJsxElementName(builder, exprPath) {
     const exprLoc = (_a = exprNode.loc) !== null && _a !== void 0 ? _a : GeneratedSource;
     if (exprPath.isJSXIdentifier()) {
         const tag = exprPath.node.name;
-        if (tag.match(/^[A-Z]/)) {
+        if (!tag.match(/^[a-z]/)) {
             const kind = getLoadKind(builder, exprPath);
             return lowerValueToTemporary(builder, {
                 kind: kind,
@@ -31406,6 +31408,13 @@ function defaultModuleTypeProvider(moduleName) {
                         restParam: Effect.Read,
                         returnType: { kind: 'type', name: 'Any' },
                         knownIncompatible: `TanStack Virtual's \`useVirtualizer()\` API returns functions that cannot be memoized safely`,
+                    },
+                    useWindowVirtualizer: {
+                        kind: 'hook',
+                        positionalParams: [],
+                        restParam: Effect.Read,
+                        returnType: { kind: 'type', name: 'Any' },
+                        knownIncompatible: `TanStack Virtual's \`useWindowVirtualizer()\` API returns functions that cannot be memoized safely`,
                     },
                 },
             };
@@ -51893,10 +51902,38 @@ function primaryLocation(detail) {
     }
     return (_b = detail.loc) !== null && _b !== void 0 ? _b : null;
 }
-function printErrorMessage(detail) {
-    const buffer = [`[ReactCompilerError] ${detail.reason}`];
-    if (detail.description != null) {
-        buffer.push(`\n\n${detail.description}.`);
+function printErrorMessage(source, error) {
+    var _a, _b, _c, _d;
+    const buffer = [`[ReactCompilerError] ${error.reason}`];
+    if (error.description != null) {
+        buffer.push(`\n\n${error.description}.`);
+    }
+    const details = (_a = error.details) !== null && _a !== void 0 ? _a : (error.loc != null
+        ? [{ kind: 'error', loc: error.loc, message: error.reason }]
+        : []);
+    for (const detail of details) {
+        if (detail.kind === 'error') {
+            const loc = detail.loc;
+            if (loc == null || typeof loc === 'symbol') {
+                continue;
+            }
+            let codeFrame;
+            try {
+                codeFrame = printCodeFrame(source, loc, (_b = detail.message) !== null && _b !== void 0 ? _b : '');
+            }
+            catch (_e) {
+                codeFrame = (_c = detail.message) !== null && _c !== void 0 ? _c : '';
+            }
+            buffer.push('\n\n');
+            if (loc.filename != null) {
+                buffer.push(`${loc.filename}:${loc.start.line}:${loc.start.column + 1}\n`);
+            }
+            buffer.push(codeFrame);
+        }
+        else if (detail.kind === 'hint') {
+            buffer.push('\n\n');
+            buffer.push((_d = detail.message) !== null && _d !== void 0 ? _d : '');
+        }
     }
     return buffer.join('');
 }
@@ -51983,7 +52020,7 @@ function makeRule(rule) {
                         continue;
                     }
                     context.report({
-                        message: printErrorMessage(detail),
+                        message: printErrorMessage(result.sourceCode, detail),
                         loc,
                         suggest: makeSuggestions(detail),
                     });
