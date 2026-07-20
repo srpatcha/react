@@ -7,7 +7,7 @@
  * @noflow
  * @nolint
  * @preventMunge
- * @generated SignedSource<<a7a79b840eb434b3ce749c561873d378>>
+ * @generated SignedSource<<49f79231a1f5ff9219e90ef8f127ee00>>
  */
 
 "use strict";
@@ -24,8 +24,6 @@ var ReactNativePrivateInterface = require("react-native/Libraries/ReactPrivate/R
   ReactSharedInternals =
     React.__CLIENT_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE,
   alwaysThrottleRetries = dynamicFlagsUntyped.alwaysThrottleRetries,
-  enableEffectEventMutationPhase =
-    dynamicFlagsUntyped.enableEffectEventMutationPhase,
   enableObjectFiber = dynamicFlagsUntyped.enableObjectFiber,
   passChildrenWhenCloningPersistedNodes =
     dynamicFlagsUntyped.passChildrenWhenCloningPersistedNodes,
@@ -1456,8 +1454,7 @@ function dispatchEvent(target, topLevelType, nativeEventParam) {
     }
   });
 }
-var BeforeMutationMask = 1024 | (enableEffectEventMutationPhase ? 0 : 4),
-  scheduleCallback$3 = Scheduler.unstable_scheduleCallback,
+var scheduleCallback$3 = Scheduler.unstable_scheduleCallback,
   cancelCallback$1 = Scheduler.unstable_cancelCallback,
   shouldYield = Scheduler.unstable_shouldYield,
   requestPaint = Scheduler.unstable_requestPaint,
@@ -1945,14 +1942,21 @@ function findCurrentHostFiberImpl(node) {
   }
   return null;
 }
-function traverseVisibleHostChildren(child, searchWithinHosts, fn, a, b, c) {
+function traverseVisibleInstancesAndTextInstances(
+  child,
+  searchWithinHosts,
+  fn,
+  a,
+  b,
+  c
+) {
   for (; null !== child; ) {
     if (
       ((5 === child.tag || (enableFragmentRefsTextNodes && 6 === child.tag)) &&
         fn(child, a, b, c)) ||
       ((22 !== child.tag || null === child.memoizedState) &&
         (searchWithinHosts || 5 !== child.tag) &&
-        traverseVisibleHostChildren(
+        traverseVisibleInstancesAndTextInstances(
           child.child,
           searchWithinHosts,
           fn,
@@ -1966,7 +1970,7 @@ function traverseVisibleHostChildren(child, searchWithinHosts, fn, a, b, c) {
   }
   return !1;
 }
-function getFragmentParentHostFiber(fiber) {
+function getFragmentParentInstanceOrContainerFiber(fiber) {
   for (fiber = fiber.return; null !== fiber; ) {
     if (3 === fiber.tag || 5 === fiber.tag) return fiber;
     fiber = fiber.return;
@@ -3028,16 +3032,14 @@ function performSyncWorkOnRoot(root, lanes) {
   performWorkOnRoot(root, lanes, !0);
 }
 function scheduleImmediateRootScheduleTask() {
-  supportsMicrotasks
-    ? scheduleMicrotask(function () {
-        0 !== (executionContext & 6)
-          ? scheduleCallback$3(
-              ImmediatePriority,
-              processRootScheduleInImmediateTask
-            )
-          : processRootScheduleInMicrotask();
-      })
-    : scheduleCallback$3(ImmediatePriority, processRootScheduleInImmediateTask);
+  scheduleMicrotask(function () {
+    0 !== (executionContext & 6)
+      ? scheduleCallback$3(
+          ImmediatePriority,
+          processRootScheduleInImmediateTask
+        )
+      : processRootScheduleInMicrotask();
+  });
 }
 function requestTransitionLane() {
   if (0 === currentEventTransitionLane) {
@@ -8993,7 +8995,7 @@ function safelyAttachRef(current, nearestMountedAncestor) {
             if (null === current.stateNode) {
               var fragmentInstance = new FragmentInstance(current);
               enableFragmentRefsInstanceHandles &&
-                traverseVisibleHostChildren(
+                traverseVisibleInstancesAndTextInstances(
                   current.child,
                   !1,
                   addFragmentHandleToFiber,
@@ -9588,7 +9590,7 @@ function isHydratingParent(current, finishedWork) {
 function commitBeforeMutationEffects(root, firstChild, committedLanes) {
   root = (committedLanes & 335544064) === committedLanes;
   nextEffect = firstChild;
-  for (firstChild = root ? 9270 : BeforeMutationMask; null !== nextEffect; ) {
+  for (firstChild = root ? 9270 : 1024; null !== nextEffect; ) {
     committedLanes = nextEffect;
     if (root) {
       var deletions = committedLanes.deletions;
@@ -9637,20 +9639,6 @@ function commitBeforeMutationEffects_complete(
       case 0:
       case 11:
       case 15:
-        if (
-          !enableEffectEventMutationPhase &&
-          0 !== (flags & 4) &&
-          ((current = fiber.updateQueue),
-          (current = null !== current ? current.events : null),
-          null !== current)
-        )
-          for (
-            isViewTransitionEligible = 0;
-            isViewTransitionEligible < current.length;
-            isViewTransitionEligible++
-          )
-            (flags = current[isViewTransitionEligible]),
-              (flags.ref.impl = flags.nextImpl);
         break;
       case 1:
         if (0 !== (flags & 1024) && null !== current) {
@@ -10185,7 +10173,6 @@ function commitMutationEffectsOnFiber(finishedWork, root, lanes) {
     case 14:
     case 15:
       if (
-        enableEffectEventMutationPhase &&
         flags & 4 &&
         ((current = finishedWork.updateQueue),
         (current = null !== current ? current.events : null),
@@ -12993,12 +12980,8 @@ function commitRoot(
         "secondary-light"
       ));
   shouldStartViewTransition = !1;
-  suspendedCommitReason =
-    0 !== (finishedWork.flags & (BeforeMutationMask | 13878));
-  if (
-    0 !== (finishedWork.subtreeFlags & (BeforeMutationMask | 13878)) ||
-    suspendedCommitReason
-  ) {
+  suspendedCommitReason = 0 !== (finishedWork.flags & 13878);
+  if (0 !== (finishedWork.subtreeFlags & 13878) || suspendedCommitReason) {
     suspendedCommitReason = ReactSharedInternals.T;
     ReactSharedInternals.T = null;
     completedRenderEndTime = currentUpdatePriority;
@@ -14175,7 +14158,7 @@ function FragmentInstance(fragmentFiber) {
 FragmentInstance.prototype.observeUsing = function (observer) {
   null === this._observers && (this._observers = new Set());
   this._observers.add(observer);
-  traverseVisibleHostChildren(
+  traverseVisibleInstancesAndTextInstances(
     this._fragmentFiber.child,
     !1,
     observeChild,
@@ -14194,7 +14177,7 @@ FragmentInstance.prototype.unobserveUsing = function (observer) {
   null !== observers &&
     observers.has(observer) &&
     (observers.delete(observer),
-    traverseVisibleHostChildren(
+    traverseVisibleInstancesAndTextInstances(
       this._fragmentFiber.child,
       !1,
       unobserveChild,
@@ -14209,10 +14192,12 @@ function unobserveChild(child, observer) {
   return !1;
 }
 FragmentInstance.prototype.compareDocumentPosition = function (otherNode) {
-  var parentHostFiber = getFragmentParentHostFiber(this._fragmentFiber);
+  var parentHostFiber = getFragmentParentInstanceOrContainerFiber(
+    this._fragmentFiber
+  );
   if (null === parentHostFiber) return Node.DOCUMENT_POSITION_DISCONNECTED;
   var children = [];
-  traverseVisibleHostChildren(
+  traverseVisibleInstancesAndTextInstances(
     this._fragmentFiber.child,
     !1,
     collectChildren,
@@ -14229,7 +14214,7 @@ FragmentInstance.prototype.compareDocumentPosition = function (otherNode) {
     children === otherNode
       ? (result = Node.DOCUMENT_POSITION_CONTAINS)
       : parentResult & Node.DOCUMENT_POSITION_CONTAINED_BY &&
-        (traverseVisibleHostChildren(
+        (traverseVisibleInstancesAndTextInstances(
           fragmentFiber.sibling,
           !1,
           findNextSibling
@@ -14268,7 +14253,9 @@ function collectChildren(child, collection) {
   return !1;
 }
 FragmentInstance.prototype.getRootNode = function (getRootNodeOptions) {
-  var parentHostFiber = getFragmentParentHostFiber(this._fragmentFiber);
+  var parentHostFiber = getFragmentParentInstanceOrContainerFiber(
+    this._fragmentFiber
+  );
   return null === parentHostFiber
     ? this
     : getPublicInstanceFromHostFiber(parentHostFiber).getRootNode(
@@ -14277,7 +14264,7 @@ FragmentInstance.prototype.getRootNode = function (getRootNodeOptions) {
 };
 FragmentInstance.prototype.getClientRects = function () {
   var rects = [];
-  traverseVisibleHostChildren(
+  traverseVisibleInstancesAndTextInstances(
     this._fragmentFiber.child,
     !1,
     collectClientRects,
@@ -14325,9 +14312,6 @@ var HostTransitionContext = {
     _currentValue2: null,
     _threadCount: 0
   },
-  supportsMicrotasks =
-    "undefined" !== typeof RN$enableMicrotasksInReact &&
-    !!RN$enableMicrotasksInReact,
   scheduleMicrotask =
     "function" === typeof queueMicrotask ? queueMicrotask : scheduleTimeout;
 getFiberCurrentPropsFromNode$1 = function (instance) {
@@ -14400,16 +14384,16 @@ batchedUpdatesImpl = function (fn, a) {
   }
 };
 var roots = new Map(),
-  internals$jscomp$inline_1686 = {
+  internals$jscomp$inline_1680 = {
     bundleType: 0,
-    version: "19.3.0-native-fb-7023f501-20260714",
+    version: "19.3.0-native-fb-83840902-20260719",
     rendererPackageName: "react-native-renderer",
     currentDispatcherRef: ReactSharedInternals,
-    reconcilerVersion: "19.3.0-native-fb-7023f501-20260714"
+    reconcilerVersion: "19.3.0-native-fb-83840902-20260719"
   };
 null !== extraDevToolsConfig &&
-  (internals$jscomp$inline_1686.rendererConfig = extraDevToolsConfig);
-internals$jscomp$inline_1686.getLaneLabelMap = function () {
+  (internals$jscomp$inline_1680.rendererConfig = extraDevToolsConfig);
+internals$jscomp$inline_1680.getLaneLabelMap = function () {
   for (
     var map = new Map(), lane = 1, index$184 = 0;
     31 > index$184;
@@ -14421,20 +14405,20 @@ internals$jscomp$inline_1686.getLaneLabelMap = function () {
   }
   return map;
 };
-internals$jscomp$inline_1686.injectProfilingHooks = function (profilingHooks) {
+internals$jscomp$inline_1680.injectProfilingHooks = function (profilingHooks) {
   injectedProfilingHooks = profilingHooks;
 };
 if ("undefined" !== typeof __REACT_DEVTOOLS_GLOBAL_HOOK__) {
-  var hook$jscomp$inline_2080 = __REACT_DEVTOOLS_GLOBAL_HOOK__;
+  var hook$jscomp$inline_2074 = __REACT_DEVTOOLS_GLOBAL_HOOK__;
   if (
-    !hook$jscomp$inline_2080.isDisabled &&
-    hook$jscomp$inline_2080.supportsFiber
+    !hook$jscomp$inline_2074.isDisabled &&
+    hook$jscomp$inline_2074.supportsFiber
   )
     try {
-      (rendererID = hook$jscomp$inline_2080.inject(
-        internals$jscomp$inline_1686
+      (rendererID = hook$jscomp$inline_2074.inject(
+        internals$jscomp$inline_1680
       )),
-        (injectedHook = hook$jscomp$inline_2080);
+        (injectedHook = hook$jscomp$inline_2074);
     } catch (err) {}
 }
 exports.createPortal = function (children, containerTag) {
