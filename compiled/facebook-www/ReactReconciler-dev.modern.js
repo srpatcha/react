@@ -8296,6 +8296,7 @@ __DEV__ &&
             return (
               (current = mountActivityChildren(workInProgress, nextProps)),
               (workInProgress.lanes = 536870912),
+              (current.memoizedState = { baseLanes: 0, cachePool: null }),
               bailoutOffscreenComponent(null, current)
             );
           pushDehydratedActivitySuspenseHandler(workInProgress);
@@ -12540,6 +12541,46 @@ __DEV__ &&
         ? (viewTransitionMutationContext = !0)
         : (rootMutationContext = !0);
     }
+    function commitNewChildToFragmentInstances(fiber, parentFragmentInstances) {
+      if (
+        (5 === fiber.tag ||
+          27 === fiber.tag ||
+          (enableFragmentRefsTextNodes && 6 === fiber.tag)) &&
+        null === fiber.alternate &&
+        null !== parentFragmentInstances
+      )
+        for (var i = 0; i < parentFragmentInstances.length; i++)
+          commitNewChildToFragmentInstance(
+            fiber.stateNode,
+            parentFragmentInstances[i]
+          );
+    }
+    function commitFragmentInstanceInsertionEffects(fiber) {
+      for (var parent = fiber.return; null !== parent; ) {
+        isFragmentInstanceParent(parent) &&
+          commitNewChildToFragmentInstance(fiber.stateNode, parent.stateNode);
+        if (isFragmentInstanceHostBoundary(parent)) break;
+        parent = parent.return;
+      }
+    }
+    function commitFragmentInstanceDeletionEffects(fiber) {
+      for (var parent = fiber.return; null !== parent; ) {
+        isFragmentInstanceParent(parent) &&
+          deleteChildFromFragmentInstance(fiber.stateNode, parent.stateNode);
+        if (isFragmentInstanceHostBoundary(parent)) break;
+        parent = parent.return;
+      }
+    }
+    function isFragmentInstanceHostBoundary(fiber) {
+      return (
+        5 === fiber.tag ||
+        3 === fiber.tag ||
+        (supportsSingletons ? 27 === fiber.tag : !1)
+      );
+    }
+    function isFragmentInstanceParent(fiber) {
+      return fiber && 7 === fiber.tag && null !== fiber.stateNode;
+    }
     function commitHostMount(finishedWork) {
       var type = finishedWork.type,
         props = finishedWork.memoizedProps,
@@ -12572,28 +12613,6 @@ __DEV__ &&
         captureCommitPhaseError(finishedWork, finishedWork.return, error);
       }
     }
-    function commitNewChildToFragmentInstances(fiber, parentFragmentInstances) {
-      if (
-        (5 === fiber.tag ||
-          27 === fiber.tag ||
-          (enableFragmentRefsTextNodes && 6 === fiber.tag)) &&
-        null === fiber.alternate &&
-        null !== parentFragmentInstances
-      )
-        for (var i = 0; i < parentFragmentInstances.length; i++)
-          commitNewChildToFragmentInstance(
-            fiber.stateNode,
-            parentFragmentInstances[i]
-          );
-    }
-    function commitFragmentInstanceDeletionEffects(fiber) {
-      for (var parent = fiber.return; null !== parent; ) {
-        isFragmentInstanceParent(parent) &&
-          deleteChildFromFragmentInstance(fiber.stateNode, parent.stateNode);
-        if (isFragmentInstanceHostParent(parent)) break;
-        parent = parent.return;
-      }
-    }
     function isHostParent(fiber) {
       return (
         5 === fiber.tag ||
@@ -12602,17 +12621,6 @@ __DEV__ &&
         (supportsSingletons
           ? 27 === fiber.tag && isSingletonScope(fiber.type)
           : !1) ||
-        4 === fiber.tag
-      );
-    }
-    function isFragmentInstanceParent(fiber) {
-      return fiber && 7 === fiber.tag && null !== fiber.stateNode;
-    }
-    function isFragmentInstanceHostParent(fiber) {
-      return (
-        5 === fiber.tag ||
-        (supportsSingletons ? 27 === fiber.tag : !1) ||
-        3 === fiber.tag ||
         4 === fiber.tag
       );
     }
@@ -12732,28 +12740,29 @@ __DEV__ &&
     }
     function commitPlacement(finishedWork) {
       for (
-        var hostParentFiber,
-          parentFragmentInstances = null,
-          collectFragmentInstances = enableFragmentRefs,
-          parentFiber = finishedWork.return;
+        var hostParentFiber, parentFiber = finishedWork.return;
         null !== parentFiber;
 
       ) {
-        if (collectFragmentInstances && isFragmentInstanceParent(parentFiber)) {
-          var fragmentInstance = parentFiber.stateNode;
-          null === parentFragmentInstances
-            ? (parentFragmentInstances = [fragmentInstance])
-            : parentFragmentInstances.push(fragmentInstance);
-        }
-        collectFragmentInstances &&
-          isFragmentInstanceHostParent(parentFiber) &&
-          (collectFragmentInstances = !1);
         if (isHostParent(parentFiber)) {
           hostParentFiber = parentFiber;
           break;
         }
         parentFiber = parentFiber.return;
       }
+      if (enableFragmentRefs) {
+        parentFiber = null;
+        for (var parent = finishedWork.return; null !== parent; ) {
+          if (isFragmentInstanceParent(parent)) {
+            var fragmentInstance = parent.stateNode;
+            null === parentFiber
+              ? (parentFiber = [fragmentInstance])
+              : parentFiber.push(fragmentInstance);
+          }
+          if (isFragmentInstanceHostBoundary(parent)) break;
+          parent = parent.return;
+        }
+      } else parentFiber = null;
       if (supportsMutation) {
         if (null == hostParentFiber)
           throw Error(
@@ -12763,37 +12772,36 @@ __DEV__ &&
           case 27:
             if (supportsSingletons) {
               hostParentFiber = hostParentFiber.stateNode;
-              collectFragmentInstances = getHostSibling(finishedWork);
+              parent = getHostSibling(finishedWork);
               insertOrAppendPlacementNode(
                 finishedWork,
-                collectFragmentInstances,
+                parent,
                 hostParentFiber,
-                parentFragmentInstances
+                parentFiber
               );
               break;
             }
           case 5:
-            collectFragmentInstances = hostParentFiber.stateNode;
+            parent = hostParentFiber.stateNode;
             hostParentFiber.flags & 32 &&
-              (resetTextContent(collectFragmentInstances),
-              (hostParentFiber.flags &= -33));
+              (resetTextContent(parent), (hostParentFiber.flags &= -33));
             hostParentFiber = getHostSibling(finishedWork);
             insertOrAppendPlacementNode(
               finishedWork,
               hostParentFiber,
-              collectFragmentInstances,
-              parentFragmentInstances
+              parent,
+              parentFiber
             );
             break;
           case 3:
           case 4:
             hostParentFiber = hostParentFiber.stateNode.containerInfo;
-            collectFragmentInstances = getHostSibling(finishedWork);
+            parent = getHostSibling(finishedWork);
             insertOrAppendPlacementNodeIntoContainer(
               finishedWork,
-              collectFragmentInstances,
+              parent,
               hostParentFiber,
-              parentFragmentInstances
+              parentFiber
             );
             break;
           default:
@@ -12805,7 +12813,7 @@ __DEV__ &&
         enableFragmentRefs &&
           commitImmutablePlacementNodeToFragmentInstances(
             finishedWork,
-            parentFragmentInstances
+            parentFiber
           );
     }
     function commitImmutablePlacementNodeToFragmentInstances(
@@ -14190,7 +14198,8 @@ __DEV__ &&
             deletedFiber.memoizedState
               ? releaseResource(deletedFiber.memoizedState)
               : deletedFiber.stateNode &&
-                unmountHoistable(deletedFiber.stateNode);
+                (offscreenSubtreeWasHidden ||
+                  unmountHoistable(deletedFiber.stateNode));
             break;
           }
         case 27:
@@ -14224,10 +14233,12 @@ __DEV__ &&
           offscreenSubtreeWasHidden ||
             safelyDetachRef(deletedFiber, nearestMountedAncestor),
             enableFragmentRefs &&
-              (5 === deletedFiber.tag ||
-                (enableFragmentRefsTextNodes && 6 === deletedFiber.tag)) &&
               commitFragmentInstanceDeletionEffects(deletedFiber);
         case 6:
+          enableFragmentRefs &&
+            enableFragmentRefsTextNodes &&
+            6 === deletedFiber.tag &&
+            commitFragmentInstanceDeletionEffects(deletedFiber);
           if (supportsMutation) {
             if (
               ((prevHostParent = hostParent),
@@ -14646,11 +14657,11 @@ __DEV__ &&
             offscreenSubtreeIsHidden &&
             ((root = finishedWork.updateQueue),
             null !== root &&
-              ((lanes = root.callbacks),
-              null !== lanes &&
-                ((flags = root.shared.hiddenCallbacks),
+              ((flags = root.callbacks),
+              null !== flags &&
+                ((lanes = root.shared.hiddenCallbacks),
                 (root.shared.hiddenCallbacks =
-                  null === flags ? lanes : flags.concat(lanes)))));
+                  null === lanes ? flags : lanes.concat(flags)))));
           break;
         case 26:
           if (supportsResources) {
@@ -14662,40 +14673,51 @@ __DEV__ &&
                 null === current ||
                 safelyDetachRef(current, current.return));
             flags & 4 &&
-              ((root = null !== current ? current.memoizedState : null),
-              (lanes = finishedWork.memoizedState),
+              ((lanes = null !== current ? current.memoizedState : null),
+              (flags = finishedWork.memoizedState),
               null === current
-                ? null === lanes
+                ? null === flags
                   ? null === finishedWork.stateNode
-                    ? (finishedWork.stateNode = hydrateHoistable(
-                        ii,
-                        finishedWork.type,
-                        finishedWork.memoizedProps,
-                        finishedWork
-                      ))
-                    : mountHoistable(
+                    ? (finishedWork.stateNode = offscreenSubtreeIsHidden
+                        ? createHoistableInstance(
+                            finishedWork.type,
+                            finishedWork.memoizedProps,
+                            root.containerInfo,
+                            finishedWork
+                          )
+                        : hydrateHoistable(
+                            ii,
+                            finishedWork.type,
+                            finishedWork.memoizedProps,
+                            finishedWork
+                          ))
+                    : offscreenSubtreeIsHidden ||
+                      mountHoistable(
                         ii,
                         finishedWork.type,
                         finishedWork.stateNode
                       )
                   : (finishedWork.stateNode = acquireResource(
                       ii,
-                      lanes,
+                      flags,
                       finishedWork.memoizedProps
                     ))
-                : root !== lanes
-                  ? (null === root
-                      ? null !== current.stateNode &&
-                        unmountHoistable(current.stateNode)
-                      : releaseResource(root),
-                    null === lanes
-                      ? mountHoistable(
+                : lanes !== flags
+                  ? (null === lanes
+                      ? ((root = current.stateNode),
+                        null === root ||
+                          offscreenSubtreeWasHidden ||
+                          unmountHoistable(root))
+                      : releaseResource(lanes),
+                    null === flags
+                      ? offscreenSubtreeIsHidden ||
+                        mountHoistable(
                           ii,
                           finishedWork.type,
                           finishedWork.stateNode
                         )
-                      : acquireResource(ii, lanes, finishedWork.memoizedProps))
-                  : null === lanes &&
+                      : acquireResource(ii, flags, finishedWork.memoizedProps))
+                  : null === flags &&
                     null !== finishedWork.stateNode &&
                     commitHostUpdate(
                       finishedWork,
@@ -14773,14 +14795,14 @@ __DEV__ &&
                 "This should have a text node initialized. This error is likely caused by a bug in React. Please file an issue."
               );
             root = finishedWork.memoizedProps;
-            lanes = null !== current ? current.memoizedProps : root;
-            flags = finishedWork.stateNode;
+            flags = null !== current ? current.memoizedProps : root;
+            lanes = finishedWork.stateNode;
             try {
               runWithFiberInDEV(
                 finishedWork,
                 commitTextUpdate,
-                flags,
                 lanes,
+                flags,
                 root
               ),
                 trackHostMutation();
@@ -14961,12 +14983,15 @@ __DEV__ &&
               _eventPayloads$ii2 ||
               offscreenSubtreeIsHidden ||
               offscreenSubtreeWasHidden ||
-              (recursivelyTraverseDisappearLayoutEffects(
-                finishedWork,
-                supportsSingletons
-                  ? IncludeHostSingletons
-                  : NoLayoutEffectTraversalFlags
-              ),
+              ((root = supportsSingletons
+                ? IncludeHostSingletons
+                : NoLayoutEffectTraversalFlags),
+              (lanes = _eventPayloads$ii2 || offscreenSubtreeWasHidden),
+              (current = offscreenSubtreeIsHidden),
+              (_eventPayloads$ii2 = offscreenSubtreeWasHidden),
+              (offscreenSubtreeIsHidden = ii || offscreenSubtreeIsHidden),
+              (offscreenSubtreeWasHidden = lanes),
+              recursivelyTraverseDisappearLayoutEffects(finishedWork, root),
               (finishedWork.mode & 2) !== NoMode &&
                 0 <= componentEffectStartTime &&
                 0 <= componentEffectEndTime &&
@@ -14976,17 +15001,19 @@ __DEV__ &&
                   componentEffectStartTime,
                   componentEffectEndTime,
                   "Disconnect"
-                )),
+                ),
+              (offscreenSubtreeIsHidden = current),
+              (offscreenSubtreeWasHidden = _eventPayloads$ii2)),
             supportsMutation &&
               (ii || !offscreenDirectParentIsHidden) &&
               hideOrUnhideAllChildren(finishedWork, ii));
           flags & 4 &&
             ((root = finishedWork.updateQueue),
             null !== root &&
-              ((lanes = root.retryQueue),
-              null !== lanes &&
+              ((flags = root.retryQueue),
+              null !== flags &&
                 ((root.retryQueue = null),
-                attachSuspenseRetryListeners(finishedWork, lanes))));
+                attachSuspenseRetryListeners(finishedWork, flags))));
           break;
         case 19:
           recursivelyTraverseMutationEffects(root, finishedWork, lanes);
@@ -15037,9 +15064,13 @@ __DEV__ &&
           break;
         case 7:
           enableFragmentRefs &&
+            (flags & 512 &&
+              (offscreenSubtreeWasHidden ||
+                null === current ||
+                safelyDetachRef(current, current.return)),
             current &&
-            null !== current.stateNode &&
-            updateFragmentInstanceFiber(finishedWork, current.stateNode);
+              null !== current.stateNode &&
+              updateFragmentInstanceFiber(finishedWork, current.stateNode));
         default:
           recursivelyTraverseMutationEffects(root, finishedWork, lanes),
             commitReconciliationEffects(finishedWork);
@@ -15245,14 +15276,29 @@ __DEV__ &&
               finishedWork.type,
               finishedWork.memoizedProps
             );
-        case 26:
         case 5:
           safelyDetachRef(finishedWork, finishedWork.return);
-          enableFragmentRefs &&
-            (5 === finishedWork.tag ||
-              27 === finishedWork.tag ||
-              (enableFragmentRefsTextNodes && 6 === finishedWork.tag)) &&
+          !enableFragmentRefs ||
+            (5 !== finishedWork.tag && 27 !== finishedWork.tag) ||
             commitFragmentInstanceDeletionEffects(finishedWork);
+          recursivelyTraverseDisappearLayoutEffects(
+            finishedWork,
+            layoutEffectTraversalFlags
+          );
+          break;
+        case 6:
+          enableFragmentRefs &&
+            enableFragmentRefsTextNodes &&
+            commitFragmentInstanceDeletionEffects(finishedWork);
+          break;
+        case 26:
+          safelyDetachRef(finishedWork, finishedWork.return);
+          supportsResources &&
+            ((instance = finishedWork.stateNode),
+            null !== finishedWork.memoizedState ||
+              null === instance ||
+              offscreenSubtreeWasHidden ||
+              unmountHoistable(instance));
           recursivelyTraverseDisappearLayoutEffects(
             finishedWork,
             layoutEffectTraversalFlags
@@ -15371,21 +15417,38 @@ __DEV__ &&
             (layoutEffectTraversalFlags & IncludeHostSingletons) !==
               NoLayoutEffectTraversalFlags &&
             commitHostSingletonAcquisition(finishedWork);
-        case 26:
         case 5:
-          if (
-            enableFragmentRefs &&
-            (5 === finishedWork.tag || 27 === finishedWork.tag)
-          )
-            a: for (var parent = finishedWork.return; null !== parent; ) {
-              isFragmentInstanceParent(parent) &&
-                commitNewChildToFragmentInstance(
-                  finishedWork.stateNode,
-                  parent.stateNode
-                );
-              if (isFragmentInstanceHostParent(parent)) break a;
-              parent = parent.return;
-            }
+          !enableFragmentRefs ||
+            (5 !== finishedWork.tag && 27 !== finishedWork.tag) ||
+            commitFragmentInstanceInsertionEffects(finishedWork);
+          recursivelyTraverseReappearLayoutEffects(
+            finishedRoot,
+            finishedWork,
+            layoutEffectTraversalFlags
+          );
+          includeWorkInProgressEffects &&
+            null === current &&
+            flags & 4 &&
+            commitHostMount(finishedWork);
+          safelyAttachRef(finishedWork, finishedWork.return);
+          break;
+        case 6:
+          enableFragmentRefs &&
+            enableFragmentRefsTextNodes &&
+            commitFragmentInstanceInsertionEffects(finishedWork);
+          break;
+        case 26:
+          if (supportsResources) {
+            var instance = finishedWork.stateNode;
+            null !== finishedWork.memoizedState ||
+              null === instance ||
+              offscreenSubtreeIsHidden ||
+              mountHoistable(
+                getHoistableRoot(instance.ownerDocument),
+                finishedWork.type,
+                instance
+              );
+          }
           recursivelyTraverseReappearLayoutEffects(
             finishedRoot,
             finishedWork,
@@ -16144,9 +16207,9 @@ __DEV__ &&
             );
           break;
         case 22:
-          var _instance2 = finishedWork.stateNode;
+          var _instance4 = finishedWork.stateNode;
           null !== finishedWork.memoizedState
-            ? _instance2._visibility & OffscreenPassiveEffectsConnected
+            ? _instance4._visibility & OffscreenPassiveEffectsConnected
               ? recursivelyTraverseReconnectPassiveEffects(
                   finishedRoot,
                   finishedWork,
@@ -16162,7 +16225,7 @@ __DEV__ &&
                   committedTransitions,
                   endTime
                 )
-            : ((_instance2._visibility |= OffscreenPassiveEffectsConnected),
+            : ((_instance4._visibility |= OffscreenPassiveEffectsConnected),
               recursivelyTraverseReconnectPassiveEffects(
                 finishedRoot,
                 finishedWork,
@@ -16176,7 +16239,7 @@ __DEV__ &&
             commitOffscreenPassiveMountEffects(
               finishedWork.alternate,
               finishedWork,
-              _instance2
+              _instance4
             );
           break;
         case 24:
@@ -23188,7 +23251,7 @@ __DEV__ &&
         version: rendererVersion,
         rendererPackageName: rendererPackageName,
         currentDispatcherRef: ReactSharedInternals,
-        reconcilerVersion: "19.3.0-www-modern-ec61f187-20260806"
+        reconcilerVersion: "19.3.0-www-modern-065bc84e-20260831"
       };
       null !== extraDevToolsConfig &&
         (internals.rendererConfig = extraDevToolsConfig);

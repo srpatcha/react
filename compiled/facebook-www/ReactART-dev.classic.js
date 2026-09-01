@@ -11649,35 +11649,29 @@ __DEV__ &&
     }
     function commitPlacement(finishedWork) {
       for (
-        var hostParentFiber,
-          parentFragmentInstances = null,
-          collectFragmentInstances = enableFragmentRefs,
-          parentFiber = finishedWork.return;
+        var hostParentFiber, parentFiber = finishedWork.return;
         null !== parentFiber;
 
       ) {
-        if (
-          collectFragmentInstances &&
-          parentFiber &&
-          7 === parentFiber.tag &&
-          null !== parentFiber.stateNode
-        ) {
-          var fragmentInstance = parentFiber.stateNode;
-          null === parentFragmentInstances
-            ? (parentFragmentInstances = [fragmentInstance])
-            : parentFragmentInstances.push(fragmentInstance);
-        }
-        !collectFragmentInstances ||
-          (5 !== parentFiber.tag &&
-            3 !== parentFiber.tag &&
-            4 !== parentFiber.tag) ||
-          (collectFragmentInstances = !1);
         if (isHostParent(parentFiber)) {
           hostParentFiber = parentFiber;
           break;
         }
         parentFiber = parentFiber.return;
       }
+      if (enableFragmentRefs) {
+        parentFiber = null;
+        for (var parent = finishedWork.return; null !== parent; ) {
+          if (parent && 7 === parent.tag && null !== parent.stateNode) {
+            var fragmentInstance = parent.stateNode;
+            null === parentFiber
+              ? (parentFiber = [fragmentInstance])
+              : parentFiber.push(fragmentInstance);
+          }
+          if (5 === parent.tag || 3 === parent.tag) break;
+          parent = parent.return;
+        }
+      } else null;
       if (null == hostParentFiber)
         throw Error(
           "Expected to find a host parent. This error is likely caused by a bug in React. Please file an issue."
@@ -11685,22 +11679,22 @@ __DEV__ &&
       switch (hostParentFiber.tag) {
         case 27:
         case 5:
-          parentFragmentInstances = hostParentFiber.stateNode;
+          parentFiber = hostParentFiber.stateNode;
           hostParentFiber.flags & 32 && (hostParentFiber.flags &= -33);
           hostParentFiber = getHostSibling(finishedWork);
           insertOrAppendPlacementNode(
             finishedWork,
             hostParentFiber,
-            parentFragmentInstances
+            parentFiber
           );
           break;
         case 3:
         case 4:
           hostParentFiber = hostParentFiber.stateNode.containerInfo;
-          parentFragmentInstances = getHostSibling(finishedWork);
+          parentFiber = getHostSibling(finishedWork);
           insertOrAppendPlacementNodeIntoContainer(
             finishedWork,
-            parentFragmentInstances,
+            parentFiber,
             hostParentFiber
           );
           break;
@@ -13215,13 +13209,13 @@ __DEV__ &&
               safelyDetachRef(current, current.return));
           flags & 64 &&
             offscreenSubtreeIsHidden &&
-            ((root = finishedWork.updateQueue),
-            null !== root &&
-              ((lanes = root.callbacks),
-              null !== lanes &&
-                ((flags = root.shared.hiddenCallbacks),
-                (root.shared.hiddenCallbacks =
-                  null === flags ? lanes : flags.concat(lanes)))));
+            ((flags = finishedWork.updateQueue),
+            null !== flags &&
+              ((root = flags.callbacks),
+              null !== root &&
+                ((lanes = flags.shared.hiddenCallbacks),
+                (flags.shared.hiddenCallbacks =
+                  null === lanes ? root : lanes.concat(root)))));
           break;
         case 26:
         case 27:
@@ -13275,16 +13269,16 @@ __DEV__ &&
               throw Error(
                 "This should have a text node initialized. This error is likely caused by a bug in React. Please file an issue."
               );
-            root = finishedWork.memoizedProps;
-            lanes = null !== current ? current.memoizedProps : root;
-            flags = finishedWork.stateNode;
+            flags = finishedWork.memoizedProps;
+            root = null !== current ? current.memoizedProps : flags;
+            lanes = finishedWork.stateNode;
             try {
               runWithFiberInDEV(
                 finishedWork,
                 commitTextUpdate,
-                flags,
                 lanes,
-                root
+                root,
+                flags
               ),
                 trackHostMutation();
             } catch (error) {
@@ -13325,10 +13319,10 @@ __DEV__ &&
           recursivelyTraverseMutationEffects(root, finishedWork, lanes);
           commitReconciliationEffects(finishedWork);
           flags & 4 &&
-            ((root = finishedWork.updateQueue),
-            null !== root &&
+            ((flags = finishedWork.updateQueue),
+            null !== flags &&
               ((finishedWork.updateQueue = null),
-              attachSuspenseRetryListeners(finishedWork, root)));
+              attachSuspenseRetryListeners(finishedWork, flags)));
           break;
         case 13:
           recursivelyTraverseMutationEffects(root, finishedWork, lanes);
@@ -13352,10 +13346,10 @@ __DEV__ &&
             } catch (error) {
               captureCommitPhaseError(finishedWork, finishedWork.return, error);
             }
-            root = finishedWork.updateQueue;
-            null !== root &&
+            flags = finishedWork.updateQueue;
+            null !== flags &&
               ((finishedWork.updateQueue = null),
-              attachSuspenseRetryListeners(finishedWork, root));
+              attachSuspenseRetryListeners(finishedWork, flags));
           }
           break;
         case 22:
@@ -13398,7 +13392,12 @@ __DEV__ &&
               _eventPayloads$ii2 ||
               offscreenSubtreeIsHidden ||
               offscreenSubtreeWasHidden ||
-              (recursivelyTraverseDisappearLayoutEffects(finishedWork),
+              ((root = _eventPayloads$ii2 || offscreenSubtreeWasHidden),
+              (lanes = offscreenSubtreeIsHidden),
+              (current = offscreenSubtreeWasHidden),
+              (offscreenSubtreeIsHidden = ii || offscreenSubtreeIsHidden),
+              (offscreenSubtreeWasHidden = root),
+              recursivelyTraverseDisappearLayoutEffects(finishedWork),
               0 !== (finishedWork.mode & 2) &&
                 0 <= componentEffectStartTime &&
                 0 <= componentEffectEndTime &&
@@ -13408,25 +13407,27 @@ __DEV__ &&
                   componentEffectStartTime,
                   componentEffectEndTime,
                   "Disconnect"
-                )),
+                ),
+              (offscreenSubtreeIsHidden = lanes),
+              (offscreenSubtreeWasHidden = current)),
             (!ii && offscreenDirectParentIsHidden) ||
               hideOrUnhideAllChildren(finishedWork, ii));
           flags & 4 &&
-            ((root = finishedWork.updateQueue),
-            null !== root &&
-              ((lanes = root.retryQueue),
-              null !== lanes &&
-                ((root.retryQueue = null),
-                attachSuspenseRetryListeners(finishedWork, lanes))));
+            ((flags = finishedWork.updateQueue),
+            null !== flags &&
+              ((root = flags.retryQueue),
+              null !== root &&
+                ((flags.retryQueue = null),
+                attachSuspenseRetryListeners(finishedWork, root))));
           break;
         case 19:
           recursivelyTraverseMutationEffects(root, finishedWork, lanes);
           commitReconciliationEffects(finishedWork);
           flags & 4 &&
-            ((root = finishedWork.updateQueue),
-            null !== root &&
+            ((flags = finishedWork.updateQueue),
+            null !== flags &&
               ((finishedWork.updateQueue = null),
-              attachSuspenseRetryListeners(finishedWork, root)));
+              attachSuspenseRetryListeners(finishedWork, flags)));
           break;
         case 30:
           enableViewTransition &&
@@ -13462,6 +13463,12 @@ __DEV__ &&
               safelyAttachRef(finishedWork, finishedWork.return));
           flags & 4 && prepareScopeUpdate();
           break;
+        case 7:
+          enableFragmentRefs &&
+            flags & 512 &&
+            (offscreenSubtreeWasHidden ||
+              null === current ||
+              safelyDetachRef(current, current.return));
         default:
           recursivelyTraverseMutationEffects(root, finishedWork, lanes),
             commitReconciliationEffects(finishedWork);
@@ -13627,8 +13634,13 @@ __DEV__ &&
           recursivelyTraverseDisappearLayoutEffects(finishedWork);
           break;
         case 27:
-        case 26:
         case 5:
+          safelyDetachRef(finishedWork, finishedWork.return);
+          recursivelyTraverseDisappearLayoutEffects(finishedWork);
+          break;
+        case 6:
+          break;
+        case 26:
           safelyDetachRef(finishedWork, finishedWork.return);
           recursivelyTraverseDisappearLayoutEffects(finishedWork);
           break;
@@ -13729,8 +13741,21 @@ __DEV__ &&
           safelyAttachRef(finishedWork, finishedWork.return);
           break;
         case 27:
-        case 26:
         case 5:
+          recursivelyTraverseReappearLayoutEffects(
+            finishedRoot,
+            finishedWork,
+            layoutEffectTraversalFlags
+          );
+          includeWorkInProgressEffects &&
+            null === current &&
+            flags & 4 &&
+            commitHostMount(finishedWork);
+          safelyAttachRef(finishedWork, finishedWork.return);
+          break;
+        case 6:
+          break;
+        case 26:
           recursivelyTraverseReappearLayoutEffects(
             finishedRoot,
             finishedWork,
@@ -14473,9 +14498,9 @@ __DEV__ &&
             );
           break;
         case 22:
-          var _instance2 = finishedWork.stateNode;
+          var _instance4 = finishedWork.stateNode;
           null !== finishedWork.memoizedState
-            ? _instance2._visibility & OffscreenPassiveEffectsConnected
+            ? _instance4._visibility & OffscreenPassiveEffectsConnected
               ? recursivelyTraverseReconnectPassiveEffects(
                   finishedRoot,
                   finishedWork,
@@ -14491,7 +14516,7 @@ __DEV__ &&
                   committedTransitions,
                   endTime
                 )
-            : ((_instance2._visibility |= OffscreenPassiveEffectsConnected),
+            : ((_instance4._visibility |= OffscreenPassiveEffectsConnected),
               recursivelyTraverseReconnectPassiveEffects(
                 finishedRoot,
                 finishedWork,
@@ -14505,7 +14530,7 @@ __DEV__ &&
             commitOffscreenPassiveMountEffects(
               finishedWork.alternate,
               finishedWork,
-              _instance2
+              _instance4
             );
           break;
         case 24:
@@ -20654,10 +20679,10 @@ __DEV__ &&
     (function () {
       var internals = {
         bundleType: 1,
-        version: "19.3.0-www-classic-ec61f187-20260806",
+        version: "19.3.0-www-classic-065bc84e-20260831",
         rendererPackageName: "react-art",
         currentDispatcherRef: ReactSharedInternals,
-        reconcilerVersion: "19.3.0-www-classic-ec61f187-20260806"
+        reconcilerVersion: "19.3.0-www-classic-065bc84e-20260831"
       };
       internals.overrideHookState = overrideHookState;
       internals.overrideHookStateDeletePath = overrideHookStateDeletePath;
@@ -20692,7 +20717,7 @@ __DEV__ &&
     exports.Shape = Shape;
     exports.Surface = Surface;
     exports.Text = Text;
-    exports.version = "19.3.0-www-classic-ec61f187-20260806";
+    exports.version = "19.3.0-www-classic-065bc84e-20260831";
     "undefined" !== typeof __REACT_DEVTOOLS_GLOBAL_HOOK__ &&
       "function" ===
         typeof __REACT_DEVTOOLS_GLOBAL_HOOK__.registerInternalModuleStop &&
