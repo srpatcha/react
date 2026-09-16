@@ -5940,11 +5940,7 @@ __DEV__ &&
     function validateFragmentProps(element, fiber, returnFiber) {
       for (var keys = Object.keys(element.props), i = 0; i < keys.length; i++) {
         var key = keys[i];
-        if (
-          "children" !== key &&
-          "key" !== key &&
-          (enableFragmentRefs ? "ref" !== key : 1)
-        ) {
+        if ("children" !== key && "key" !== key && "ref" !== key) {
           null === fiber &&
             ((fiber = createFiberFromElement(element, returnFiber.mode, 0)),
             (fiber._debugInfo = currentDebugInfo),
@@ -5952,15 +5948,10 @@ __DEV__ &&
           runWithFiberInDEV(
             fiber,
             function (erroredKey) {
-              enableFragmentRefs
-                ? console.error(
-                    "Invalid prop `%s` supplied to `React.Fragment`. React.Fragment can only have `key`, `ref`, and `children` props.",
-                    erroredKey
-                  )
-                : console.error(
-                    "Invalid prop `%s` supplied to `React.Fragment`. React.Fragment can only have `key` and `children` props.",
-                    erroredKey
-                  );
+              console.error(
+                "Invalid prop `%s` supplied to `React.Fragment`. React.Fragment can only have `key`, `ref`, and `children` props.",
+                erroredKey
+              );
             },
             key
           );
@@ -6137,7 +6128,7 @@ __DEV__ &&
               lanes,
               element.key
             )),
-            enableFragmentRefs && coerceRef(current, element),
+            coerceRef(current, element),
             validateFragmentProps(element, current, returnFiber),
             current
           );
@@ -6738,7 +6729,7 @@ __DEV__ &&
           null !== newChild &&
           newChild.type === REACT_FRAGMENT_TYPE &&
           null === newChild.key &&
-          (enableFragmentRefs ? void 0 === newChild.props.ref : 1) &&
+          void 0 === newChild.props.ref &&
           (validateFragmentProps(newChild, null, returnFiber),
           (newChild = newChild.props.children));
         if ("object" === typeof newChild && null !== newChild) {
@@ -6759,7 +6750,7 @@ __DEV__ &&
                           currentFirstChild,
                           newChild.props.children
                         );
-                        enableFragmentRefs && coerceRef(lanes, newChild);
+                        coerceRef(lanes, newChild);
                         lanes.return = returnFiber;
                         lanes._debugOwner = newChild._owner;
                         lanes._debugInfo = currentDebugInfo;
@@ -6802,7 +6793,7 @@ __DEV__ &&
                       lanes,
                       newChild.key
                     )),
-                    enableFragmentRefs && coerceRef(lanes, newChild),
+                    coerceRef(lanes, newChild),
                     (lanes.return = returnFiber),
                     (lanes._debugOwner = returnFiber),
                     (lanes._debugTask = returnFiber._debugTask),
@@ -12449,7 +12440,7 @@ __DEV__ &&
         case 7:
           return (
             (returnFiber = workInProgress.pendingProps),
-            enableFragmentRefs && markRef(current, workInProgress),
+            markRef(current, workInProgress),
             reconcileChildren(
               current,
               workInProgress,
@@ -14194,18 +14185,16 @@ __DEV__ &&
             instanceToUse = finishedWork.stateNode;
             break;
           case 7:
-            if (enableFragmentRefs) {
-              null === finishedWork.stateNode &&
-                ((instanceToUse = new FragmentInstance(finishedWork)),
-                traverseFragmentInstancesAndTextInstances(
-                  finishedWork,
-                  addFragmentHandleToFiber,
-                  instanceToUse
-                ),
-                (finishedWork.stateNode = instanceToUse));
-              instanceToUse = finishedWork.stateNode;
-              break;
-            }
+            null === finishedWork.stateNode &&
+              ((instanceToUse = new FragmentInstance(finishedWork)),
+              traverseFragmentInstancesAndTextInstances(
+                finishedWork,
+                addFragmentHandleToFiber,
+                instanceToUse
+              ),
+              (finishedWork.stateNode = instanceToUse));
+            instanceToUse = finishedWork.stateNode;
+            break;
           default:
             instanceToUse = finishedWork.stateNode;
         }
@@ -14465,15 +14454,13 @@ __DEV__ &&
               null !== before.onclick ||
               (before.onclick = noop$1);
           }
-        enableFragmentRefs &&
-          commitNewChildToFragmentInstances(node, parentFragmentInstances);
+        commitNewChildToFragmentInstances(node, parentFragmentInstances);
         trackHostMutation();
       } else if (
         4 !== tag &&
         (27 === tag &&
-          (enableFragmentRefs &&
-            (commitNewChildToFragmentInstances(node, parentFragmentInstances),
-            (parentFragmentInstances = null)),
+          (commitNewChildToFragmentInstances(node, parentFragmentInstances),
+          (parentFragmentInstances = null),
           isSingletonScope(node.type) &&
             ((parent = node.stateNode), (before = null))),
         (node = node.child),
@@ -14508,15 +14495,13 @@ __DEV__ &&
       if (5 === tag || 6 === tag)
         (tag = node.stateNode),
           before ? parent.insertBefore(tag, before) : parent.appendChild(tag),
-          enableFragmentRefs &&
-            commitNewChildToFragmentInstances(node, parentFragmentInstances),
+          commitNewChildToFragmentInstances(node, parentFragmentInstances),
           trackHostMutation();
       else if (
         4 !== tag &&
         (27 === tag &&
-          (enableFragmentRefs &&
-            (commitNewChildToFragmentInstances(node, parentFragmentInstances),
-            (parentFragmentInstances = null)),
+          (commitNewChildToFragmentInstances(node, parentFragmentInstances),
+          (parentFragmentInstances = null),
           isSingletonScope(node.type) && (parent = node.stateNode)),
         (node = node.child),
         null !== node)
@@ -14552,19 +14537,17 @@ __DEV__ &&
         }
         parentFiber = parentFiber.return;
       }
-      if (enableFragmentRefs) {
-        parentFiber = null;
-        for (var parent = finishedWork.return; null !== parent; ) {
-          if (isFragmentInstanceParent(parent)) {
-            var fragmentInstance = parent.stateNode;
-            null === parentFiber
-              ? (parentFiber = [fragmentInstance])
-              : parentFiber.push(fragmentInstance);
-          }
-          if (isFragmentInstanceHostBoundary(parent)) break;
-          parent = parent.return;
+      parentFiber = null;
+      for (var parent = finishedWork.return; null !== parent; ) {
+        if (isFragmentInstanceParent(parent)) {
+          var fragmentInstance = parent.stateNode;
+          null === parentFiber
+            ? (parentFiber = [fragmentInstance])
+            : parentFiber.push(fragmentInstance);
         }
-      } else parentFiber = null;
+        if (isFragmentInstanceHostBoundary(parent)) break;
+        parent = parent.return;
+      }
       if (null == hostParentFiber)
         throw Error(
           "Expected to find a host parent. This error is likely caused by a bug in React. Please file an issue."
@@ -15664,9 +15647,7 @@ __DEV__ &&
             flags & 512 && safelyAttachRef(finishedWork, finishedWork.return));
           break;
         case 7:
-          enableFragmentRefs &&
-            flags & 512 &&
-            safelyAttachRef(finishedWork, finishedWork.return);
+          flags & 512 && safelyAttachRef(finishedWork, finishedWork.return);
         default:
           recursivelyTraverseLayoutEffects(finishedRoot, finishedWork);
       }
@@ -16051,8 +16032,7 @@ __DEV__ &&
         case 27:
           offscreenSubtreeWasHidden ||
             safelyDetachRef(deletedFiber, nearestMountedAncestor);
-          enableFragmentRefs &&
-            commitFragmentInstanceDeletionEffects(deletedFiber);
+          commitFragmentInstanceDeletionEffects(deletedFiber);
           var prevHostParent = hostParent,
             prevHostParentIsContainer = hostParentIsContainer;
           isSingletonScope(deletedFiber.type) &&
@@ -16076,11 +16056,9 @@ __DEV__ &&
         case 5:
           offscreenSubtreeWasHidden ||
             safelyDetachRef(deletedFiber, nearestMountedAncestor),
-            enableFragmentRefs &&
-              commitFragmentInstanceDeletionEffects(deletedFiber);
+            commitFragmentInstanceDeletionEffects(deletedFiber);
         case 6:
-          enableFragmentRefs &&
-            enableFragmentRefsTextNodes &&
+          enableFragmentRefsTextNodes &&
             6 === deletedFiber.tag &&
             commitFragmentInstanceDeletionEffects(deletedFiber);
           prevHostParent = hostParent;
@@ -16239,16 +16217,14 @@ __DEV__ &&
             break;
           }
         case 7:
-          if (enableFragmentRefs) {
-            offscreenSubtreeWasHidden ||
-              safelyDetachRef(deletedFiber, nearestMountedAncestor);
-            recursivelyTraverseDeletionEffects(
-              finishedRoot,
-              nearestMountedAncestor,
-              deletedFiber
-            );
-            break;
-          }
+          offscreenSubtreeWasHidden ||
+            safelyDetachRef(deletedFiber, nearestMountedAncestor);
+          recursivelyTraverseDeletionEffects(
+            finishedRoot,
+            nearestMountedAncestor,
+            deletedFiber
+          );
+          break;
         default:
           recursivelyTraverseDeletionEffects(
             finishedRoot,
@@ -16953,14 +16929,13 @@ __DEV__ &&
           flags & 4 && precacheFiberNode(finishedWork, finishedWork.stateNode);
           break;
         case 7:
-          enableFragmentRefs &&
-            (flags & 512 &&
-              (offscreenSubtreeWasHidden ||
-                null === current ||
-                safelyDetachRef(current, current.return)),
+          flags & 512 &&
+            (offscreenSubtreeWasHidden ||
+              null === current ||
+              safelyDetachRef(current, current.return)),
             current &&
               null !== current.stateNode &&
-              (current.stateNode._fragmentFiber = finishedWork));
+              (current.stateNode._fragmentFiber = finishedWork);
         default:
           recursivelyTraverseMutationEffects(root, finishedWork, lanes),
             commitReconciliationEffects(finishedWork);
@@ -17204,8 +17179,7 @@ __DEV__ &&
             );
         case 5:
           safelyDetachRef(finishedWork, finishedWork.return);
-          !enableFragmentRefs ||
-            (5 !== finishedWork.tag && 27 !== finishedWork.tag) ||
+          (5 !== finishedWork.tag && 27 !== finishedWork.tag) ||
             commitFragmentInstanceDeletionEffects(finishedWork);
           recursivelyTraverseDisappearLayoutEffects(
             finishedWork,
@@ -17213,8 +17187,7 @@ __DEV__ &&
           );
           break;
         case 6:
-          enableFragmentRefs &&
-            enableFragmentRefsTextNodes &&
+          enableFragmentRefsTextNodes &&
             commitFragmentInstanceDeletionEffects(finishedWork);
           break;
         case 26:
@@ -17247,8 +17220,7 @@ __DEV__ &&
           );
           break;
         case 7:
-          enableFragmentRefs &&
-            safelyDetachRef(finishedWork, finishedWork.return);
+          safelyDetachRef(finishedWork, finishedWork.return);
         default:
           recursivelyTraverseDisappearLayoutEffects(
             finishedWork,
@@ -17342,8 +17314,7 @@ __DEV__ &&
             NoLayoutEffectTraversalFlags &&
             commitHostSingletonAcquisition(finishedWork);
         case 5:
-          !enableFragmentRefs ||
-            (5 !== finishedWork.tag && 27 !== finishedWork.tag) ||
+          (5 !== finishedWork.tag && 27 !== finishedWork.tag) ||
             commitFragmentInstanceInsertionEffects(finishedWork);
           recursivelyTraverseReappearLayoutEffects(
             finishedRoot,
@@ -17357,8 +17328,7 @@ __DEV__ &&
           safelyAttachRef(finishedWork, finishedWork.return);
           break;
         case 6:
-          enableFragmentRefs &&
-            enableFragmentRefsTextNodes &&
+          enableFragmentRefsTextNodes &&
             commitFragmentInstanceInsertionEffects(finishedWork);
           break;
         case 26:
@@ -17452,8 +17422,7 @@ __DEV__ &&
             safelyAttachRef(finishedWork, finishedWork.return));
           break;
         case 7:
-          enableFragmentRefs &&
-            safelyAttachRef(finishedWork, finishedWork.return);
+          safelyAttachRef(finishedWork, finishedWork.return);
         default:
           recursivelyTraverseReappearLayoutEffects(
             finishedRoot,
@@ -23480,6 +23449,7 @@ __DEV__ &&
               case "touchstart":
                 SyntheticEventCtor = SyntheticTouchEvent;
                 break;
+              case ANIMATION_CANCEL:
               case ANIMATION_END:
               case ANIMATION_ITERATION:
               case ANIMATION_START:
@@ -23542,7 +23512,10 @@ __DEV__ &&
                   nativeEvent.type,
                   inCapturePhase,
                   !inCapturePhase &&
-                    ("scroll" === domEventName || "scrollend" === domEventName),
+                    ("scroll" === domEventName ||
+                      "scrollend" === domEventName ||
+                      "toggle" === domEventName ||
+                      "beforetoggle" === domEventName),
                   nativeEvent
                 )),
                 0 < inCapturePhase.length &&
@@ -27238,13 +27211,19 @@ __DEV__ &&
         return precedingBoundaryFiber;
       }
       if (documentPosition & Node.DOCUMENT_POSITION_CONTAINS) {
-        if (null === otherFiber)
-          return (
-            (otherFiber = otherNode.ownerDocument),
-            otherNode === otherFiber ||
-              otherNode === otherFiber.documentElement ||
-              otherNode === otherFiber.body
-          );
+        if (null === otherFiber) {
+          a: {
+            for (otherFiber = fragmentFiber.return; null !== otherFiber; ) {
+              if (3 === otherFiber.tag) {
+                otherFiber = otherFiber.stateNode.containerInfo;
+                break a;
+              }
+              otherFiber = otherFiber.return;
+            }
+            otherFiber = null;
+          }
+          return null !== otherFiber && otherNode.contains(otherFiber);
+        }
         a: {
           otherFiber = fragmentFiber;
           for (
@@ -29476,9 +29455,6 @@ __DEV__ &&
       enableSuspenseyImages = dynamicFeatureFlags.enableSuspenseyImages,
       enableViewTransition = dynamicFeatureFlags.enableViewTransition,
       enableScrollEndPolyfill = dynamicFeatureFlags.enableScrollEndPolyfill,
-      enableFragmentRefs = dynamicFeatureFlags.enableFragmentRefs,
-      enableFragmentRefsScrollIntoView =
-        dynamicFeatureFlags.enableFragmentRefsScrollIntoView,
       enableFragmentRefsTextNodes =
         dynamicFeatureFlags.enableFragmentRefsTextNodes,
       enableInternalInstanceMap = dynamicFeatureFlags.enableInternalInstanceMap,
@@ -32951,6 +32927,7 @@ __DEV__ &&
       lastSelection = null,
       mouseDown = !1,
       vendorPrefixes = {
+        animationcancel: makePrefixMap("Animation", "AnimationCancel"),
         animationend: makePrefixMap("Animation", "AnimationEnd"),
         animationiteration: makePrefixMap("Animation", "AnimationIteration"),
         animationstart: makePrefixMap("Animation", "AnimationStart"),
@@ -32964,12 +32941,14 @@ __DEV__ &&
     canUseDOM &&
       ((style = document.createElement("div").style),
       "AnimationEvent" in window ||
-        (delete vendorPrefixes.animationend.animation,
+        (delete vendorPrefixes.animationcancel.animation,
+        delete vendorPrefixes.animationend.animation,
         delete vendorPrefixes.animationiteration.animation,
         delete vendorPrefixes.animationstart.animation),
       "TransitionEvent" in window ||
         delete vendorPrefixes.transitionend.transition);
-    var ANIMATION_END = getVendorPrefixedEventName("animationend"),
+    var ANIMATION_CANCEL = getVendorPrefixedEventName("animationcancel"),
+      ANIMATION_END = getVendorPrefixedEventName("animationend"),
       ANIMATION_ITERATION = getVendorPrefixedEventName("animationiteration"),
       ANIMATION_START = getVendorPrefixedEventName("animationstart"),
       TRANSITION_RUN = getVendorPrefixedEventName("transitionrun"),
@@ -32996,6 +32975,7 @@ __DEV__ &&
         eventName = eventName[0].toUpperCase() + eventName.slice(1);
         registerSimpleEvent(domEventName, "on" + eventName);
       }
+      registerSimpleEvent(ANIMATION_CANCEL, "onAnimationCancel");
       registerSimpleEvent(ANIMATION_END, "onAnimationEnd");
       registerSimpleEvent(ANIMATION_ITERATION, "onAnimationIteration");
       registerSimpleEvent(ANIMATION_START, "onAnimationStart");
@@ -33502,62 +33482,61 @@ __DEV__ &&
         ? parentHostFiber
         : Node.DOCUMENT_POSITION_IMPLEMENTATION_SPECIFIC;
     };
-    enableFragmentRefsScrollIntoView &&
-      (FragmentInstance.prototype.scrollIntoView = function (alignToTop) {
-        if ("object" === typeof alignToTop)
-          throw Error(
-            "FragmentInstance.scrollIntoView() does not support scrollIntoViewOptions. Use the alignToTop boolean instead."
-          );
-        var children = [];
-        traverseFragmentInstancesAndTextInstances(
-          this._fragmentFiber,
-          collectChildren,
-          children
+    FragmentInstance.prototype.scrollIntoView = function (alignToTop) {
+      if ("object" === typeof alignToTop)
+        throw Error(
+          "FragmentInstance.scrollIntoView() does not support scrollIntoViewOptions. Use the alignToTop boolean instead."
         );
-        var resolvedAlignToTop = !1 !== alignToTop;
-        if (0 === children.length) {
-          var hostSiblings = getFragmentInstanceOrTextInstanceSiblings(
-            this._fragmentFiber
-          );
-          hostSiblings = resolvedAlignToTop
-            ? hostSiblings[1] ||
-              hostSiblings[0] ||
-              getFragmentParentInstanceOrContainerFiber(this._fragmentFiber)
-            : hostSiblings[0] || hostSiblings[1];
-          if (null === hostSiblings) return;
-          if (enableFragmentRefsTextNodes && 6 === hostSiblings.tag) {
-            alignToTop = getInstanceFromHostFiber(hostSiblings);
-            scrollTextNodeIntoView(alignToTop, resolvedAlignToTop);
+      var children = [];
+      traverseFragmentInstancesAndTextInstances(
+        this._fragmentFiber,
+        collectChildren,
+        children
+      );
+      var resolvedAlignToTop = !1 !== alignToTop;
+      if (0 === children.length) {
+        var hostSiblings = getFragmentInstanceOrTextInstanceSiblings(
+          this._fragmentFiber
+        );
+        hostSiblings = resolvedAlignToTop
+          ? hostSiblings[1] ||
+            hostSiblings[0] ||
+            getFragmentParentInstanceOrContainerFiber(this._fragmentFiber)
+          : hostSiblings[0] || hostSiblings[1];
+        if (null === hostSiblings) return;
+        if (enableFragmentRefsTextNodes && 6 === hostSiblings.tag) {
+          alignToTop = getInstanceFromHostFiber(hostSiblings);
+          scrollTextNodeIntoView(alignToTop, resolvedAlignToTop);
+          return;
+        }
+        hostSiblings = getInstanceFromHostFiber(hostSiblings);
+        if (hostSiblings.nodeType !== DOCUMENT_NODE) {
+          if (hostSiblings.nodeType === DOCUMENT_FRAGMENT_NODE) {
+            resolvedAlignToTop =
+              "host" in hostSiblings ? hostSiblings.host : null;
+            null !== resolvedAlignToTop
+              ? resolvedAlignToTop.scrollIntoView(alignToTop)
+              : console.warn(
+                  "You are attempting to scroll a FragmentInstance that is only mounted inside a detached DocumentFragment. No scroll was performed."
+                );
             return;
           }
-          hostSiblings = getInstanceFromHostFiber(hostSiblings);
-          if (hostSiblings.nodeType !== DOCUMENT_NODE) {
-            if (hostSiblings.nodeType === DOCUMENT_FRAGMENT_NODE) {
-              resolvedAlignToTop =
-                "host" in hostSiblings ? hostSiblings.host : null;
-              null !== resolvedAlignToTop
-                ? resolvedAlignToTop.scrollIntoView(alignToTop)
-                : console.warn(
-                    "You are attempting to scroll a FragmentInstance that is only mounted inside a detached DocumentFragment. No scroll was performed."
-                  );
-              return;
-            }
-            hostSiblings.scrollIntoView(alignToTop);
-          }
+          hostSiblings.scrollIntoView(alignToTop);
         }
-        for (
-          hostSiblings = resolvedAlignToTop ? children.length - 1 : 0;
-          hostSiblings !== (resolvedAlignToTop ? -1 : children.length);
+      }
+      for (
+        hostSiblings = resolvedAlignToTop ? children.length - 1 : 0;
+        hostSiblings !== (resolvedAlignToTop ? -1 : children.length);
 
-        ) {
-          var child = children[hostSiblings];
-          enableFragmentRefsTextNodes && 6 === child.tag
-            ? ((child = getInstanceFromHostFiber(child)),
-              scrollTextNodeIntoView(child, resolvedAlignToTop))
-            : getInstanceFromHostFiber(child).scrollIntoView(alignToTop);
-          hostSiblings += resolvedAlignToTop ? -1 : 1;
-        }
-      });
+      ) {
+        var child = children[hostSiblings];
+        enableFragmentRefsTextNodes && 6 === child.tag
+          ? ((child = getInstanceFromHostFiber(child)),
+            scrollTextNodeIntoView(child, resolvedAlignToTop))
+          : getInstanceFromHostFiber(child).scrollIntoView(alignToTop);
+        hostSiblings += resolvedAlignToTop ? -1 : 1;
+      }
+    };
     var previousHydratableOnEnteringScopedSingleton = null,
       NotLoaded = 0,
       Loaded = 1,
@@ -33865,11 +33844,11 @@ __DEV__ &&
       return_targetInst = null;
     (function () {
       var isomorphicReactPackageVersion = React.version;
-      if ("19.3.0-www-modern-6c0e1047-20260908" !== isomorphicReactPackageVersion)
+      if ("19.3.0-www-modern-ff8f88fc-20260915" !== isomorphicReactPackageVersion)
         throw Error(
           'Incompatible React versions: The "react" and "react-dom" packages must have the exact same version. Instead got:\n  - react:      ' +
             (isomorphicReactPackageVersion +
-              "\n  - react-dom:  19.3.0-www-modern-6c0e1047-20260908\nLearn more: https://react.dev/warnings/version-mismatch")
+              "\n  - react-dom:  19.3.0-www-modern-ff8f88fc-20260915\nLearn more: https://react.dev/warnings/version-mismatch")
         );
     })();
     ("function" === typeof Map &&
@@ -33912,10 +33891,10 @@ __DEV__ &&
       !(function () {
         var internals = {
           bundleType: 1,
-          version: "19.3.0-www-modern-6c0e1047-20260908",
+          version: "19.3.0-www-modern-ff8f88fc-20260915",
           rendererPackageName: "react-dom",
           currentDispatcherRef: ReactSharedInternals,
-          reconcilerVersion: "19.3.0-www-modern-6c0e1047-20260908"
+          reconcilerVersion: "19.3.0-www-modern-ff8f88fc-20260915"
         };
         internals.overrideHookState = overrideHookState;
         internals.overrideHookStateDeletePath = overrideHookStateDeletePath;
@@ -34706,5 +34685,5 @@ __DEV__ &&
     exports.useFormStatus = function () {
       return resolveDispatcher().useHostTransitionStatus();
     };
-    exports.version = "19.3.0-www-modern-6c0e1047-20260908";
+    exports.version = "19.3.0-www-modern-ff8f88fc-20260915";
   })();
